@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CodeBox Web Runner</title>
+    <style>
+        /* Dark theme styling - LeetCode/VS Code jaisa look */
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        /* Language dropdown aur button */
+        select,
+        button {
+            padding: 8px 12px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #005999;
+        }
+
+        /* Code likhne wala bada box */
+        textarea {
+            width: 100%;
+            height: 250px;
+            background-color: #2d2d2d;
+            color: #9cdcfe;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            padding: 10px;
+            border: 1px solid #444;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+
+        /* Result/Output dikhane wala box */
+        .output-box {
+            margin-top: 15px;
+            background-color: #111;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+
+        pre {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            /* line breaks preserve karega */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>CodeBox — Execution Engine (Phase 2 Demo)</h2>
+
+    <!-- 1. Language select karne ka dropdown -->
+    <label for="langSelect">Language chunein: </label>
+    <select id="langSelect">
+        <option value="python">Python</option>
+        <option value="cpp">C++</option>
+        <option value="java">Java</option>
+        <option value="c">C</option>
+    </select>
+
+    <br>
+
+    <!-- 2. Code type karne ka bada box -->
+    <textarea id="codeBox" placeholder="WRITE DOWN THE CODE HERE..."></textarea>
+
+    <br>
+
+    <!-- 3. Submit/Run button -->
+    <button onclick="executeCode()">Run Code </button>
+
+    <!-- 4. Output box jahan result aayega -->
+    <div class="output-box">
+        <h3>Verdict: <span id="verdictText" style="color: #ffd700;">Waiting...</span></h3>
+        <p><strong>Standard Output (stdout):</strong></p>
+        <pre id="stdoutText" style="color: #4ec9b0;"></pre>
+        <p><strong>Errors (stderr):</strong></p>
+        <pre id="stderrText" style="color: #f48771;"></pre>
+    </div>
+
+    <!-- 5. JavaScript Logic jo C++ server se baat karega -->
+    <script>
+        async function executeCode() {
+            // Step A: Dropdown se language aur Textarea se code nikalo
+            const selectedLanguage = document.getElementById("langSelect").value;
+            const userCode = document.getElementById("codeBox").value;
+
+            // UI par loading message dikhao
+            document.getElementById("verdictText").innerText = "Executing inside Docker Sandbox...";
+            document.getElementById("verdictText").style.color = "#ffd700";
+            document.getElementById("stdoutText").innerText = "";
+            document.getElementById("stderrText").innerText = "";
+
+            try {
+                // Step B: C++ server ke /run endpoint par HTTP POST request bhejo
+                const response = await fetch("http://localhost:8080/run", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    // Normal text ko JSON format mein pack kar rahe hain
+                    body: JSON.stringify({
+                        language: selectedLanguage,
+                        code: userCode
+                    })
+                });
+
+                // Step C: C++ server se aane wala JSON response read karo
+                const result = await response.json();
+
+                // Step D: Response ko screen par print karo
+                document.getElementById("verdictText").innerText = result.status;
+                if (result.status === "Accepted") {
+                    document.getElementById("verdictText").style.color = "#4ec9b0"; // Green
+                } else {
+                    document.getElementById("verdictText").style.color = "#f48771"; // Red
+                }
+
+                document.getElementById("stdoutText").innerText = result.stdout || "(Empty output)";
+                document.getElementById("stderrText").innerText = result.stderr || "(No errors)";
+
+            } catch (error) {
+                // Agar C++ server start nahi hai toh connection error dikhayega
+                document.getElementById("verdictText").innerText = "Server Offline";
+                document.getElementById("verdictText").style.color = "#f48771";
+                document.getElementById("stderrText").innerText = "Make sure './codebox_server' terminal par chal raha ho!";
+            }
+        }
+    </script>
+
+</body>
+
+</html>
