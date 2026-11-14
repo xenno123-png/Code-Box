@@ -57,7 +57,10 @@
 #pragma GCC diagnostic pop
 #endif
 
+#include <sqlite3.h>           // SQLite3 embedded database library
+
 // Project Headers in Dependency Order
+#include "DatabaseManager.h"   // Strict 3NF SQLite database manager and repository
 #include "LanguageConfig.h"    // 4-language rules, file extensions, and docker run commands
 #include "ResultEvaluator.h"   // Evaluates exit codes and output into verdicts (Accepted, TLE, etc.)
 #include "FileManager.h"       // Saves submitted code to /tmp and cleans it up after execution

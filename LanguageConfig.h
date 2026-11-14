@@ -9,5 +9,5 @@ class LanguageConfig {
 public:
     bool isSupported(const string& language) const;
     string getFileExtension(const string& language) const;
-    string getRunCommand(const string& language, const string& sourceFile) const;
+    string getRunCommand(const string& language, const string& sourceFile, const string& inputFile = "") const;
 };

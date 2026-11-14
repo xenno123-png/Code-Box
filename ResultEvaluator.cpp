@@ -50,3 +50,47 @@ string ResultEvaluator::evaluate(const DockerSandbox::CommandResult& result, con
     // 6. Runtime errors: exceptions, segfaults, and non-zero exit codes
     return "Runtime Error";
 }
+
+namespace {
+string trim(const string& s) {
+    size_t start = 0;
+    while (start < s.size() && (s[start] == ' ' || s[start] == '\t' || s[start] == '\r' || s[start] == '\n')) {
+        start++;
+    }
+    size_t end = s.size();
+    while (end > start && (s[end - 1] == ' ' || s[end - 1] == '\t' || s[end - 1] == '\r' || s[end - 1] == '\n')) {
+        end--;
+    }
+    return s.substr(start, end - start);
+}
+
+string normalizeNewlines(const string& s) {
+    string res;
+    res.reserve(s.size());
+    for (size_t i = 0; i < s.size(); i++) {
+        if (s[i] == '\r') {
+            if (i + 1 < s.size() && s[i + 1] == '\n') continue;
+            res += '\n';
+        } else {
+            res += s[i];
+        }
+    }
+    return res;
+}
+}
+
+string ResultEvaluator::evaluateTestCase(const DockerSandbox::CommandResult& result, const string& language, const string& expectedOutput) const {
+    string verdict = evaluate(result, language);
+    if (verdict != "Accepted") {
+        return verdict;
+    }
+
+    string outTrimmed = normalizeNewlines(trim(result.stdout));
+    string expTrimmed = normalizeNewlines(trim(expectedOutput));
+
+    if (outTrimmed == expTrimmed) {
+        return "Accepted";
+    }
+
+    return "Wrong Answer";
+}

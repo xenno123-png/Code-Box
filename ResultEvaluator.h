@@ -9,4 +9,5 @@ using namespace std;
 class ResultEvaluator {
 public:
     string evaluate(const DockerSandbox::CommandResult& result, const string& language) const;
+    string evaluateTestCase(const DockerSandbox::CommandResult& result, const string& language, const string& expectedOutput) const;
 };

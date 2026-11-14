@@ -9,9 +9,19 @@ extern "C" void handleShutdownSignal(int signum) {
 }
 
 int main() {
-    cout << "Starting CodeBox backend..." << endl;
+    cout << "====================================================" << endl;
+    cout << "  CodeBox v3.0: Online Coding & Judge Platform      " << endl;
+    cout << "====================================================" << endl;
 
-    // Launch worker threads (max 3 concurrent jobs)
+    // 1. Initialize Strict 3NF Relational Database (SQLite3)
+    cout << "[Init] Checking SQLite database & 3NF schema..." << endl;
+    if (!DatabaseManager::instance().autoInitialize()) {
+        cerr << "[Error] Failed to initialize database! Exiting." << endl;
+        return 1;
+    }
+
+    // 2. Launch worker threads (3 concurrent execution workers)
+    cout << "[Init] Starting QueueScheduler worker pool (3 FCFS threads)..." << endl;
     QueueScheduler scheduler;
     scheduler.start();
 
@@ -25,14 +35,41 @@ int main() {
     signal(SIGTERM, handleShutdownSignal);
 #endif
 
+    // Frontend Web Asset Routes
+    server.Get("/", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Get("/index.html", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Get("/demo.html", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Health Check
     server.Get("/health", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Authentication Routes
+    server.Post("/api/register", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Post("/api/login", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Problem Catalog Routes
+    server.Get("/api/problems", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Get(R"(/api/problems/\d+)", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Code Execution & Judge Routes
+    server.Post("/api/playground/run", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Post("/api/leetcode/submit", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Leaderboard & User Submissions
+    server.Get("/api/leaderboard", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Get(R"(/api/user/\d+/submissions)", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // Backward Compatible Phase 2 Routes
     server.Post("/run", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
     server.Post("/execute", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+
+    // CORS preflight options
     server.Options(".*", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
 
-    cout << "Server listening on http://0.0.0.0:8080" << endl;
+    cout << "[Ready] Server listening on http://0.0.0.0:8080" << endl;
+    cout << "        Open http://localhost:8080 in your browser" << endl;
     if (!server.listen("0.0.0.0", 8080)) {
-        cerr << "Failed to start server on port 8080" << endl;
+        cerr << "[Error] Failed to bind to port 8080" << endl;
         scheduler.stop();
         return 1;
     }

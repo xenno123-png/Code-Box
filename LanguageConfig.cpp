@@ -21,7 +21,7 @@ string LanguageConfig::getFileExtension(const string& language) const {
     return "";
 }
 
-string LanguageConfig::getRunCommand(const string& language, const string& sourceFile) const {
+string LanguageConfig::getRunCommand(const string& language, const string& sourceFile, const string& inputFile) const {
     string lang = toLower(language);
 
     string fileName = sourceFile;
@@ -36,28 +36,35 @@ string LanguageConfig::getRunCommand(const string& language, const string& sourc
         stem = fileName.substr(0, dotPos);
     }
 
+    string inputRedirection = !inputFile.empty() ? " < input.txt" : "";
+
     string image;
     string innerCommand;
 
     if (lang == "python" || lang == "py") {
         image = "python:3";
-        innerCommand = "timeout 2s python3 " + fileName;
+        innerCommand = "timeout 2s python3 " + fileName + inputRedirection;
     } else if (lang == "c") {
         image = "gcc:latest";
-        innerCommand = "gcc " + fileName + " -o " + stem + " && timeout 2s ./" + stem;
+        innerCommand = "gcc " + fileName + " -o " + stem + " && timeout 2s ./" + stem + inputRedirection;
     } else if (lang == "java") {
         image = "openjdk:17";
-        innerCommand = "javac " + fileName + " && timeout 2s java " + stem;
+        innerCommand = "javac " + fileName + " && timeout 2s java " + stem + inputRedirection;
     } else {
         image = "gcc:latest";
-        innerCommand = "g++ " + fileName + " -o " + stem + " && timeout 2s ./" + stem;
+        innerCommand = "g++ -std=c++17 " + fileName + " -o " + stem + " && timeout 2s ./" + stem + inputRedirection;
     }
 
     string containerPath = "/code/" + fileName;
 
+    string volumes = "-v \"" + sourceFile + ":" + containerPath + "\"";
+    if (!inputFile.empty()) {
+        volumes += " -v \"" + inputFile + ":/code/input.txt\"";
+    }
+
     string command = "timeout 10s docker run --rm "
                      "--memory=\"256m\" --memory-swap=\"256m\" --cpus=\"1.0\" --pids-limit=64 --network=none "
-                     "-w /code -v \"" + sourceFile + ":" + containerPath + "\" "
+                     "-w /code " + volumes + " "
                      + image + " bash -c \"" + innerCommand + "\"";
 
     return command;

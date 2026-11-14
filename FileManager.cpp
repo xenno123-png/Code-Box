@@ -62,6 +62,24 @@ string FileManager::saveCodeToFile(const string& code, const string& extension) 
     return filepath;
 }
 
+string FileManager::saveInputToFile(const string& input) {
+    uint64_t currentCount = fileCounter.fetch_add(1, memory_order_relaxed);
+    auto timestamp = chrono::steady_clock::now().time_since_epoch().count();
+    string filepath = "/tmp/codebox_in_" + to_string(GET_PID()) + "_" + to_string(timestamp) + "_" + to_string(currentCount) + ".txt";
+
+    ofstream file(filepath, ios::out | ios::binary);
+    if (!file.is_open()) {
+        cerr << "FileManager: could not create input file " << filepath << endl;
+        return "";
+    }
+
+    file << input;
+    file.close();
+
+    cout << "FileManager: saved stdin input to " << filepath << endl;
+    return filepath;
+}
+
 void FileManager::deleteFile(const string& filepath) {
     if (filepath.empty()) return;
 

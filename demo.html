@@ -1,153 +1,1461 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>CodeBox Web Runner</title>
-    <style>
-        /* Dark theme styling - LeetCode/VS Code jaisa look */
-        body {
-            background-color: #1e1e1e;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-
-        /* Language dropdown aur button */
-        select,
-        button {
-            padding: 8px 12px;
-            font-size: 15px;
-            margin-bottom: 12px;
-            border-radius: 4px;
-        }
-
-        button {
-            background-color: #007acc;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background-color: #005999;
-        }
-
-        /* Code likhne wala bada box */
-        textarea {
-            width: 100%;
-            height: 250px;
-            background-color: #2d2d2d;
-            color: #9cdcfe;
-            font-family: 'Courier New', monospace;
-            font-size: 15px;
-            padding: 10px;
-            border: 1px solid #444;
-            box-sizing: border-box;
-            border-radius: 4px;
-        }
-
-        /* Result/Output dikhane wala box */
-        .output-box {
-            margin-top: 15px;
-            background-color: #111;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #333;
-        }
-
-        pre {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            /* line breaks preserve karega */
-        }
-    </style>
-</head>
-
-<body>
-
-    <h2>CodeBox — Execution Engine (Phase 2 Demo)</h2>
-
-    <!-- 1. Language select karne ka dropdown -->
-    <label for="langSelect">Language chunein: </label>
-    <select id="langSelect">
-        <option value="python">Python</option>
-        <option value="cpp">C++</option>
-        <option value="java">Java</option>
-        <option value="c">C</option>
-    </select>
-
-    <br>
-
-    <!-- 2. Code type karne ka bada box -->
-    <textarea id="codeBox" placeholder="WRITE DOWN THE CODE HERE..."></textarea>
-
-    <br>
-
-    <!-- 3. Submit/Run button -->
-    <button onclick="executeCode()">Run Code </button>
-
-    <!-- 4. Output box jahan result aayega -->
-    <div class="output-box">
-        <h3>Verdict: <span id="verdictText" style="color: #ffd700;">Waiting...</span></h3>
-        <p><strong>Standard Output (stdout):</strong></p>
-        <pre id="stdoutText" style="color: #4ec9b0;"></pre>
-        <p><strong>Errors (stderr):</strong></p>
-        <pre id="stderrText" style="color: #f48771;"></pre>
-    </div>
-
-    <!-- 5. JavaScript Logic jo C++ server se baat karega -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBox 3.0 | Containerized Cloud Coding & DSA Judge</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        async function executeCode() {
-            // Step A: Dropdown se language aur Textarea se code nikalo
-            const selectedLanguage = document.getElementById("langSelect").value;
-            const userCode = document.getElementById("codeBox").value;
-
-            // UI par loading message dikhao
-            document.getElementById("verdictText").innerText = "Executing inside Docker Sandbox...";
-            document.getElementById("verdictText").style.color = "#ffd700";
-            document.getElementById("stdoutText").innerText = "";
-            document.getElementById("stderrText").innerText = "";
-
-            try {
-                // Step B: C++ server ke /run endpoint par HTTP POST request bhejo
-                const response = await fetch("http://localhost:8080/run", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            950: '#0b0f19',
+                            900: '#0f172a',
+                            850: '#131d35',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569'
+                        }
                     },
-                    // Normal text ko JSON format mein pack kar rahe hain
-                    body: JSON.stringify({
-                        language: selectedLanguage,
-                        code: userCode
-                    })
-                });
-
-                // Step C: C++ server se aane wala JSON response read karo
-                const result = await response.json();
-
-                // Step D: Response ko screen par print karo
-                document.getElementById("verdictText").innerText = result.status;
-                if (result.status === "Accepted") {
-                    document.getElementById("verdictText").style.color = "#4ec9b0"; // Green
-                } else {
-                    document.getElementById("verdictText").style.color = "#f48771"; // Red
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Courier New', 'monospace']
+                    }
                 }
-
-                document.getElementById("stdoutText").innerText = result.stdout || "(Empty output)";
-                document.getElementById("stderrText").innerText = result.stderr || "(No errors)";
-
-            } catch (error) {
-                // Agar C++ server start nahi hai toh connection error dikhayega
-                document.getElementById("verdictText").innerText = "Server Offline";
-                document.getElementById("verdictText").style.color = "#f48771";
-                document.getElementById("stderrText").innerText = "Make sure './codebox_server' terminal par chal raha ho!";
             }
         }
     </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Monaco Editor AMD Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-accent {
+            box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.3);
+        }
+        .pulse-dot {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+        @keyframes pulse-ring {
+            to {
+                box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
+
+    <!-- Top Navigation Header -->
+    <header class="h-14 bg-dark-900 border-b border-dark-700/60 px-4 flex items-center justify-between shrink-0 z-30">
+        <!-- Brand Logo & Phase Badge -->
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
+                <i class="fa-solid fa-cube"></i>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CodeBox</span>
+                <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">Phase 3</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-1.5 ml-4 pl-4 border-l border-dark-700/60 text-xs text-slate-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
+                <span>Docker Daemon Online</span>
+            </div>
+        </div>
+
+        <!-- 3 Primary Navigation Tabs -->
+        <nav class="flex items-center bg-dark-950/80 p-1 rounded-lg border border-dark-700/40">
+            <button id="nav-btn-dashboard" onclick="switchView('dashboard')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 bg-blue-600 text-white shadow-sm">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard & Leaderboard</span>
+            </button>
+            <button id="nav-btn-leetcode" onclick="switchView('leetcode')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-code"></i>
+                <span>LeetCode DSA Arena</span>
+                <span id="badge-solved-count" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono">0/30</span>
+            </button>
+            <button id="nav-btn-playground" onclick="switchView('playground')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-terminal"></i>
+                <span>VS Code Studio</span>
+            </button>
+        </nav>
+
+        <!-- User / Auth Profile Area -->
+        <div class="flex items-center space-x-3">
+            <div id="auth-logged-in" class="hidden flex items-center space-x-3">
+                <div class="flex items-center space-x-2 bg-dark-800/80 px-2.5 py-1 rounded-full border border-dark-700/40">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-xs font-bold text-white uppercase shadow" id="user-avatar-initial">D</div>
+                    <span id="header-username" class="text-xs font-medium text-slate-200">demo_coder</span>
+                    <span id="header-user-score" class="text-[11px] font-mono text-amber-400 ml-1">★ 0 pts</span>
+                </div>
+                <button onclick="logoutUser()" title="Logout" class="text-slate-400 hover:text-rose-400 p-1.5 rounded text-xs transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+            <div id="auth-logged-out" class="flex items-center space-x-2">
+                <button onclick="openAuthModal('login')" class="text-xs px-3 py-1.5 rounded-md text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-700 border border-dark-700/60 transition">
+                    Sign In
+                </button>
+                <button onclick="demoLogin()" class="text-xs px-3 py-1.5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-blue-500/20 transition">
+                    <i class="fa-solid fa-bolt mr-1"></i> 1-Click Demo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace View Container -->
+    <main class="flex-1 overflow-hidden relative">
+
+        <!-- ==================================================================== -->
+        <!-- VIEW 1: DASHBOARD & LEADERBOARD                                      -->
+        <!-- ==================================================================== -->
+        <div id="view-dashboard" class="h-full overflow-y-auto p-6 space-y-6">
+            <div class="max-w-7xl mx-auto space-y-6">
+
+                <!-- Welcome Hero & Engine Telemetry Banner -->
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-dark-900 via-dark-850 to-dark-900 border border-slate-800">
+                    <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="text-xs font-semibold tracking-wider uppercase text-blue-400">CodeBox Engine v3.0</span>
+                                <span class="text-slate-600">•</span>
+                                <span class="text-xs text-emerald-400 flex items-center"><i class="fa-solid fa-shield-halved mr-1"></i> Production Ready</span>
+                            </div>
+                            <h1 class="text-2xl font-bold tracking-tight text-white">Welcome back, <span id="dash-username" class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Guest</span>!</h1>
+                            <p class="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                                Complete online coding platform powered by C++17, SQLite 3NF relational catalog, 30+ DSA problems, 3-worker FCFS thread pool, and Docker sandboxes with 256MB cgroups RAM & 2.0s SIGKILL limits.
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-3 shrink-0">
+                            <button onclick="switchView('leetcode')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Solve Next Problem</span>
+                            </button>
+                            <button onclick="switchView('playground')" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center space-x-2">
+                                <i class="fa-solid fa-code"></i>
+                                <span>Open Playground</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Hardware & Engine Telemetry Bar -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80 text-xs">
+                        <div class="flex items-center space-x-2 text-slate-400">
+                            <i class="fa-solid fa-memory text-cyan-400"></i>
+                            <span>RAM Limit: <b class="text-slate-200 font-mono">256MB cgroups</b></span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-slate-400">
+                            <i class="fa-solid fa-stopwatch text-amber-400"></i>
+                            <span>Watchdog: <b class="text-slate-200 font-mono">2.0s SIGKILL</b></span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-slate-400">
+                            <i class="fa-solid fa-server text-purple-400"></i>
+                            <span>Scheduler: <b class="text-slate-200 font-mono">3 FCFS Threads</b></span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-slate-400">
+                            <i class="fa-solid fa-database text-emerald-400"></i>
+                            <span>Storage: <b class="text-slate-200 font-mono">SQLite 3NF (codebox.db)</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Score Card -->
+                    <div class="glass-card rounded-xl p-5 border border-slate-800/80 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Score</span>
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="stat-total-score" class="text-3xl font-extrabold text-white font-mono">0</span>
+                            <span class="text-xs text-amber-400">Points</span>
+                        </div>
+                        <div class="mt-2 text-[11px] text-slate-400 flex items-center">
+                            <span>10 pts Easy • 20 pts Med • 30 pts Hard</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Solved Card -->
+                    <div class="glass-card rounded-xl p-5 border border-slate-800/80 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Solved Problems</span>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="stat-total-solved" class="text-3xl font-extrabold text-white font-mono">0</span>
+                            <span class="text-xs text-slate-400">/ 30 Problems</span>
+                        </div>
+                        <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div id="stat-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Breakdown Card -->
+                    <div class="glass-card rounded-xl p-5 border border-slate-800/80 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Difficulty Split</span>
+                            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="bg-dark-900/60 p-1.5 rounded-lg border border-emerald-500/20">
+                                <div class="text-[10px] text-emerald-400 font-semibold">Easy</div>
+                                <div id="stat-solved-easy" class="text-base font-bold text-white font-mono mt-0.5">0</div>
+                            </div>
+                            <div class="bg-dark-900/60 p-1.5 rounded-lg border border-amber-500/20">
+                                <div class="text-[10px] text-amber-400 font-semibold">Med</div>
+                                <div id="stat-solved-medium" class="text-base font-bold text-white font-mono mt-0.5">0</div>
+                            </div>
+                            <div class="bg-dark-900/60 p-1.5 rounded-lg border border-rose-500/20">
+                                <div class="text-[10px] text-rose-400 font-semibold">Hard</div>
+                                <div id="stat-solved-hard" class="text-base font-bold text-white font-mono mt-0.5">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submissions Total Card -->
+                    <div class="glass-card rounded-xl p-5 border border-slate-800/80 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Submissions</span>
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="stat-total-submissions" class="text-3xl font-extrabold text-white font-mono">0</span>
+                            <span class="text-xs text-slate-400">Runs</span>
+                        </div>
+                        <div class="mt-2 text-[11px] text-slate-400 flex items-center">
+                            <span>Multi-test case judge verified</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2-Column Section: Leaderboard + Recent Submissions -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- Live Leaderboard (7 Cols) -->
+                    <div class="lg:col-span-7 glass-card rounded-2xl p-5 border border-slate-800">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-ranking-star text-amber-400 text-base"></i>
+                                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Global Leaderboard</h2>
+                            </div>
+                            <button onclick="loadLeaderboard()" class="text-xs text-slate-400 hover:text-white transition flex items-center space-x-1">
+                                <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-800/60 pb-2">
+                                        <th class="py-2 px-3 font-semibold w-12 text-center">Rank</th>
+                                        <th class="py-2 px-3 font-semibold">User</th>
+                                        <th class="py-2 px-3 font-semibold text-center">Solved</th>
+                                        <th class="py-2 px-3 font-semibold text-center">Total Score</th>
+                                        <th class="py-2 px-3 font-semibold text-right">Submissions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-tbody" class="divide-y divide-slate-800/40">
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-slate-500">
+                                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading leaderboard...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Submissions History (5 Cols) -->
+                    <div class="lg:col-span-5 glass-card rounded-2xl p-5 border border-slate-800">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-history text-blue-400 text-base"></i>
+                                <h2 class="text-sm font-bold text-white uppercase tracking-wider">My Submissions</h2>
+                            </div>
+                            <span id="user-sub-count-badge" class="text-[10px] px-2 py-0.5 rounded bg-dark-800 text-slate-400 font-mono">0 total</span>
+                        </div>
+
+                        <div id="user-submissions-list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                            <div class="py-8 text-center text-slate-500 text-xs">
+                                No submissions yet. Solve a problem in LeetCode Arena!
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- VIEW 2: LEETCODE DSA ARENA                                           -->
+        <!-- ==================================================================== -->
+        <div id="view-leetcode" class="h-full hidden flex flex-col overflow-hidden">
+            <!-- Problem Sub-Header & Controls -->
+            <div class="h-12 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 text-xs">
+                <div class="flex items-center space-x-3">
+                    <button id="btn-toggle-problem-list" onclick="toggleProblemSidebar()" class="px-2.5 py-1.5 rounded bg-dark-800 hover:bg-dark-700 text-slate-300 border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Problem Catalog</span>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <span id="arena-problem-number" class="font-mono text-slate-400 font-bold">#1</span>
+                        <span id="arena-problem-title" class="font-semibold text-white text-sm">Two Sum</span>
+                        <span id="arena-problem-diff" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Easy</span>
+                        <span id="arena-problem-cat" class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">Arrays</span>
+                        <span id="arena-problem-solved-badge" class="hidden text-emerald-400 text-xs font-medium ml-2"><i class="fa-solid fa-circle-check mr-1"></i>Solved</span>
+                    </div>
+                </div>
+
+                <!-- Language Selector & Action Buttons -->
+                <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1 bg-dark-800 px-2 py-1 rounded border border-slate-700">
+                        <label for="arena-lang-select" class="text-slate-400 text-[11px] font-medium mr-1">Language:</label>
+                        <select id="arena-lang-select" onchange="onArenaLanguageChange()" class="bg-transparent text-slate-100 font-medium text-xs focus:outline-none cursor-pointer">
+                            <option value="cpp" class="bg-dark-900 text-white">C++17 (g++ -O2)</option>
+                            <option value="python" class="bg-dark-900 text-white">Python 3 (python:3)</option>
+                            <option value="java" class="bg-dark-900 text-white">Java 17 (openjdk:17)</option>
+                        </select>
+                    </div>
+                    <button onclick="resetArenaStarterCode()" title="Reset to default starter template" class="p-1.5 px-2 rounded bg-dark-800 hover:bg-dark-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </button>
+                    <button id="btn-run-sample" onclick="runArenaCode(true)" class="px-3.5 py-1.5 rounded-md bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 font-semibold transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-play text-blue-400 text-[11px]"></i>
+                        <span>Run Sample</span>
+                    </button>
+                    <button id="btn-submit-solution" onclick="runArenaCode(false)" class="px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center space-x-1.5 shadow-sm shadow-emerald-600/30">
+                        <i class="fa-solid fa-cloud-arrow-up text-[11px]"></i>
+                        <span>Submit Solution</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Split Arena Workspace Body -->
+            <div class="flex-1 flex overflow-hidden relative">
+
+                <!-- Collapsible Problem Catalog Sidebar (Overlay or Left Pane) -->
+                <aside id="problem-catalog-sidebar" class="w-80 bg-dark-900 border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300 z-20">
+                    <!-- Search & Filter Controls -->
+                    <div class="p-3 border-b border-slate-800 space-y-2 bg-dark-950/40">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                            <input type="text" id="problem-search-input" oninput="filterProblemList()" placeholder="Search 30+ problems..." class="w-full bg-dark-800 text-slate-100 text-xs pl-8 pr-3 py-1.5 rounded-md border border-slate-700 focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                            <select id="filter-difficulty" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1 rounded border border-slate-700 focus:outline-none">
+                                <option value="all">All Difficulties</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                            <select id="filter-category" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1 rounded border border-slate-700 focus:outline-none">
+                                <option value="all">All Topics</option>
+                                <option value="Arrays">Arrays</option>
+                                <option value="Strings">Strings</option>
+                                <option value="Hashing">Hashing</option>
+                                <option value="Two Pointers">Two Pointers</option>
+                                <option value="Binary Search">Binary Search</option>
+                                <option value="Stack">Stack</option>
+                                <option value="Linked List">Linked List</option>
+                                <option value="Dynamic Programming">DP</option>
+                                <option value="Trees">Trees</option>
+                                <option value="Math">Math</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Problem List Scroll Area -->
+                    <div id="problem-list-container" class="flex-1 overflow-y-auto divide-y divide-slate-800/40 text-xs">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </aside>
+
+                <!-- Left Split: Problem Statement & Details Pane -->
+                <section class="flex-1 min-w-[360px] max-w-xl bg-dark-900/60 border-r border-slate-800 flex flex-col overflow-hidden">
+                    <div class="h-9 bg-dark-900 border-b border-slate-800 px-4 flex items-center space-x-4 text-xs font-medium">
+                        <button class="text-blue-400 border-b-2 border-blue-500 pb-1 font-semibold flex items-center space-x-1">
+                            <i class="fa-regular fa-file-lines"></i>
+                            <span>Description</span>
+                        </button>
+                    </div>
+
+                    <div id="arena-problem-content" class="flex-1 overflow-y-auto p-5 space-y-5 text-sm text-slate-300 leading-relaxed">
+                        <!-- Statement, Constraints & Examples injected dynamically -->
+                    </div>
+                </section>
+
+                <!-- Right Split: Monaco Code Editor & Bottom Judge Drawer -->
+                <section class="flex-1 flex flex-col overflow-hidden bg-dark-950">
+                    <!-- Monaco Container -->
+                    <div id="arena-monaco-container" class="flex-1 min-h-[300px]"></div>
+
+                    <!-- Bottom Judge Drawer (Expandable) -->
+                    <div id="arena-judge-drawer" class="h-64 border-t border-slate-800 bg-dark-900 flex flex-col shrink-0">
+                        <!-- Drawer Header Tabs -->
+                        <div class="h-9 bg-dark-950/80 px-4 border-b border-slate-800 flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-slate-300 flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-vial"></i>
+                                    <span>Test Results</span>
+                                </span>
+                                <div id="judge-verdict-tag" class="hidden px-2 py-0.5 rounded text-[10px] font-bold"></div>
+                            </div>
+                            <div id="judge-perf-metrics" class="hidden flex items-center space-x-4 text-[11px] text-slate-400 font-mono">
+                                <span><i class="fa-solid fa-stopwatch text-slate-500 mr-1"></i><span id="metric-runtime">0 ms</span></span>
+                                <span><i class="fa-solid fa-memory text-slate-500 mr-1"></i><span id="metric-memory">15 MB</span></span>
+                                <span><i class="fa-solid fa-circle-check text-slate-500 mr-1"></i><span id="metric-passed">0/0 Passed</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Drawer Body: Test Cases Tabs & Output Panels -->
+                        <div class="flex-1 flex overflow-hidden">
+                            <!-- Left: Test case pills selector -->
+                            <div id="judge-tc-tabs" class="w-36 bg-dark-950 border-r border-slate-800 p-2 space-y-1 overflow-y-auto shrink-0">
+                                <div class="text-[10px] uppercase font-bold text-slate-500 px-2 py-1">Cases</div>
+                                <!-- Testcase pills rendered via JS -->
+                            </div>
+
+                            <!-- Right: Selected Test Case Detail (Input, Expected, Actual, Stderr) -->
+                            <div id="judge-tc-detail" class="flex-1 p-3 overflow-y-auto space-y-3 text-xs font-mono bg-dark-900/50">
+                                <div class="text-slate-500 text-center py-10 font-sans">
+                                    Click "Run Sample" to test against examples, or "Submit Solution" for full multi-testcase evaluation.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- VIEW 3: VS CODE STUDIO (PLAYGROUND)                                  -->
+        <!-- ==================================================================== -->
+        <div id="view-playground" class="h-full hidden flex flex-col overflow-hidden">
+            <!-- Studio Toolbar -->
+            <div class="h-11 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 text-xs">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-slate-200 flex items-center space-x-1.5">
+                        <i class="fa-brands fa-microsoft text-blue-400"></i>
+                        <span>VS Code Playground</span>
+                    </span>
+                    <span class="text-slate-600">|</span>
+                    <!-- Mock Tabs -->
+                    <div class="flex items-center space-x-1">
+                        <button id="tab-play-cpp" onclick="switchPlaygroundFile('cpp')" class="px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-code text-blue-400"></i>
+                            <span>main.cpp</span>
+                        </button>
+                        <button id="tab-play-python" onclick="switchPlaygroundFile('python')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5">
+                            <i class="fa-brands fa-python text-amber-400"></i>
+                            <span>solution.py</span>
+                        </button>
+                        <button id="tab-play-java" onclick="switchPlaygroundFile('java')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5">
+                            <i class="fa-brands fa-java text-rose-400"></i>
+                            <span>Main.java</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="btn-run-playground" onclick="runPlaygroundCode()" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center space-x-2 shadow-sm shadow-blue-600/30">
+                        <i class="fa-solid fa-play text-[11px]"></i>
+                        <span>Run Code (Ctrl + Enter)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Playground Body: Monaco + Split Bottom Terminal -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Monaco Instance -->
+                <div id="playground-monaco-container" class="flex-1 min-h-[300px]"></div>
+
+                <!-- Bottom Split Terminal: Stdin (Input) + Console Output (Stdout/Stderr) -->
+                <div class="h-64 border-t border-slate-800 bg-dark-950 flex flex-col shrink-0">
+                    <div class="h-8 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-bold text-slate-300 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-terminal text-slate-400"></i>
+                                <span>Terminal Console</span>
+                            </span>
+                            <span id="playground-status-pill" class="hidden text-[10px] px-2 py-0.5 rounded font-bold font-mono"></span>
+                            <span id="playground-runtime-pill" class="hidden text-[11px] text-slate-400 font-mono"></span>
+                        </div>
+                        <button onclick="clearPlaygroundConsole()" class="text-slate-400 hover:text-slate-200 text-xs">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Clear
+                        </button>
+                    </div>
+
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden text-xs font-mono">
+                        <!-- Stdin Input Drawer -->
+                        <div class="flex flex-col p-3 overflow-hidden">
+                            <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                                <span>Standard Input (stdin)</span>
+                                <span class="text-[10px] text-slate-500 lowercase">passed to cin/sys.stdin/Scanner</span>
+                            </div>
+                            <textarea id="playground-stdin-input" placeholder="Type custom input here..." class="flex-1 w-full bg-dark-900 border border-slate-800 rounded p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-none"></textarea>
+                        </div>
+
+                        <!-- Output Console (stdout / stderr) -->
+                        <div class="flex flex-col p-3 overflow-hidden bg-dark-950">
+                            <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                                <span>Execution Output (stdout / stderr)</span>
+                            </div>
+                            <pre id="playground-stdout" class="flex-1 overflow-y-auto bg-dark-900/70 border border-slate-800 rounded p-2.5 text-slate-300 whitespace-pre-wrap select-text"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VS Code Status Bar with Live Engine Telemetry -->
+            <footer class="h-6 bg-blue-700 text-white px-3 flex items-center justify-between shrink-0 text-[11px] font-mono select-none">
+                <div class="flex items-center space-x-3">
+                    <span class="flex items-center space-x-1">
+                        <i class="fa-solid fa-shield-halved text-[10px]"></i>
+                        <span>Docker Isolated</span>
+                    </span>
+                    <span>•</span>
+                    <span>256MB RAM</span>
+                    <span>•</span>
+                    <span>2.0s Watchdog</span>
+                    <span>•</span>
+                    <span>3 FCFS Threads</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="sb-lang-label">C++17</span>
+                    <span>UTF-8</span>
+                    <span class="flex items-center space-x-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
+                        <span>0.0.0.0:8080</span>
+                    </span>
+                </div>
+            </footer>
+        </div>
+
+    </main>
+
+    <!-- ==================================================================== -->
+    <!-- AUTH MODAL (LOGIN / SIGN UP)                                         -->
+    <!-- ==================================================================== -->
+    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl w-full max-w-md p-6 border border-slate-700 bg-dark-900 relative shadow-2xl">
+            <button onclick="closeAuthModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-200 text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl mx-auto mb-2 shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white" id="auth-modal-title">Sign in to CodeBox</h3>
+                <p class="text-xs text-slate-400 mt-1">Access 30+ DSA problems, track submissions & compete on leaderboard.</p>
+            </div>
+
+            <!-- 1-Click Demo Login Banner -->
+            <button onclick="demoLogin()" class="w-full py-2.5 px-4 mb-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-600/20 transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-bolt text-amber-300"></i>
+                <span>Instant 1-Click Demo Login (demo_coder)</span>
+            </button>
+
+            <div class="flex items-center my-3">
+                <div class="flex-1 border-t border-slate-800"></div>
+                <span class="px-3 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Or with credentials</span>
+                <div class="flex-1 border-t border-slate-800"></div>
+            </div>
+
+            <!-- Tabs: Login vs Register -->
+            <div class="flex rounded-lg bg-dark-950 p-1 mb-4 text-xs font-semibold">
+                <button id="modal-tab-login" onclick="setAuthMode('login')" class="flex-1 py-1.5 rounded-md bg-dark-800 text-white">Login</button>
+                <button id="modal-tab-signup" onclick="setAuthMode('signup')" class="flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200">Create Account</button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
+                <div id="auth-field-email" class="hidden space-y-1">
+                    <label class="text-slate-300 font-medium">Email Address</label>
+                    <input type="email" id="auth-input-email" placeholder="coder@example.com" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="space-y-1">
+                    <label id="auth-label-user" class="text-slate-300 font-medium">Username or Email</label>
+                    <input type="text" id="auth-input-identifier" required placeholder="demo_coder" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-slate-300 font-medium">Password</label>
+                    <input type="password" id="auth-input-password" required placeholder="••••••••" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div id="auth-error-msg" class="hidden text-rose-400 text-xs py-1"></div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-xl bg-dark-700 hover:bg-dark-600 text-white font-semibold transition mt-2">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- ==================================================================== -->
+    <!-- APPLICATION JAVASCRIPT STATE & LOGIC                                 -->
+    <!-- ==================================================================== -->
+    <script>
+        // Global App State
+        const AppState = {
+            activeView: 'dashboard',
+            currentUser: null,
+            problems: [],
+            selectedProblem: null,
+            arenaLanguage: 'cpp',
+            arenaEditor: null,
+            playgroundEditor: null,
+            playgroundFile: 'cpp',
+            playgroundCodeMap: {
+                cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    cout << "CodeBox v3.0 C++17 Playground" << endl;\n    string input;\n    while (getline(cin, input)) {\n        cout << "Echo: " << input << endl;\n    }\n    return 0;\n}`,
+                python: `# CodeBox v3.0 Python 3 Playground\nimport sys\n\nprint("CodeBox v3.0 Python 3 Engine Online")\nfor line in sys.stdin:\n    print(f"Echo: {line.strip()}")`,
+                java: `// CodeBox v3.0 Java 17 Playground\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("CodeBox v3.0 Java 17 Engine Online");\n        Scanner scanner = new Scanner(System.in);\n        while (scanner.hasNextLine()) {\n            System.out.println("Echo: " + scanner.nextLine());\n        }\n    }\n}`
+            },
+            authMode: 'login'
+        };
+
+        // Initialize Monaco AMD Loader
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuthSession();
+            initMonacoEditors();
+            loadProblemsCatalog();
+            loadLeaderboard();
+
+            // Keyboard shortcut for playground
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    if (AppState.activeView === 'playground') {
+                        runPlaygroundCode();
+                    } else if (AppState.activeView === 'leetcode') {
+                        runArenaCode(false);
+                    }
+                }
+            });
+        });
+
+        // ====================================================================
+        // MONACO EDITOR INITIALIZATION
+        // ====================================================================
+        function initMonacoEditors() {
+            require(['vs/editor/editor.main'], function () {
+                // Arena Editor
+                const arenaContainer = document.getElementById('arena-monaco-container');
+                AppState.arenaEditor = monaco.editor.create(arenaContainer, {
+                    value: '// Select a problem to begin coding...',
+                    language: 'cpp',
+                    theme: 'vs-dark',
+                    fontSize: 13,
+                    fontFamily: 'JetBrains Mono, monospace',
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 4,
+                    padding: { top: 12, bottom: 12 }
+                });
+
+                // Playground Editor
+                const playgroundContainer = document.getElementById('playground-monaco-container');
+                AppState.playgroundEditor = monaco.editor.create(playgroundContainer, {
+                    value: AppState.playgroundCodeMap['cpp'],
+                    language: 'cpp',
+                    theme: 'vs-dark',
+                    fontSize: 13,
+                    fontFamily: 'JetBrains Mono, monospace',
+                    minimap: { enabled: true },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 4,
+                    padding: { top: 12, bottom: 12 }
+                });
+            });
+        }
+
+        // ====================================================================
+        // NAVIGATION & VIEW SWITCHING
+        // ====================================================================
+        function switchView(viewName) {
+            AppState.activeView = viewName;
+
+            const views = ['dashboard', 'leetcode', 'playground'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const btn = document.getElementById(`nav-btn-${v}`);
+                if (v === viewName) {
+                    el.classList.remove('hidden');
+                    btn.className = "px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 bg-blue-600 text-white shadow-sm";
+                } else {
+                    el.classList.add('hidden');
+                    btn.className = "px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200";
+                }
+            });
+
+            // Trigger monaco relayout
+            setTimeout(() => {
+                if (viewName === 'leetcode' && AppState.arenaEditor) AppState.arenaEditor.layout();
+                if (viewName === 'playground' && AppState.playgroundEditor) AppState.playgroundEditor.layout();
+            }, 50);
+
+            if (viewName === 'dashboard') {
+                loadLeaderboard();
+                if (AppState.currentUser) loadUserSubmissions(AppState.currentUser.user_id);
+            }
+        }
+
+        // ====================================================================
+        // AUTHENTICATION & SESSION MANAGEMENT
+        // ====================================================================
+        function initAuthSession() {
+            const saved = localStorage.getItem('codebox_user');
+            if (saved) {
+                try {
+                    AppState.currentUser = JSON.parse(saved);
+                    updateUserUI();
+                    loadUserStats(AppState.currentUser.user_id);
+                    loadUserSubmissions(AppState.currentUser.user_id);
+                } catch (e) {
+                    localStorage.removeItem('codebox_user');
+                }
+            } else {
+                updateUserUI();
+            }
+        }
+
+        function updateUserUI() {
+            const loggedInEl = document.getElementById('auth-logged-in');
+            const loggedOutEl = document.getElementById('auth-logged-out');
+            const dashUser = document.getElementById('dash-username');
+
+            if (AppState.currentUser) {
+                loggedInEl.classList.remove('hidden');
+                loggedOutEl.classList.add('hidden');
+                document.getElementById('header-username').textContent = AppState.currentUser.username;
+                document.getElementById('user-avatar-initial').textContent = AppState.currentUser.username.charAt(0).toUpperCase();
+                dashUser.textContent = AppState.currentUser.username;
+            } else {
+                loggedInEl.classList.add('hidden');
+                loggedOutEl.classList.remove('hidden');
+                dashUser.textContent = 'Guest';
+            }
+        }
+
+        function openAuthModal(mode = 'login') {
+            AppState.authMode = mode;
+            setAuthMode(mode);
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
+
+        function setAuthMode(mode) {
+            AppState.authMode = mode;
+            const tabLogin = document.getElementById('modal-tab-login');
+            const tabSignup = document.getElementById('modal-tab-signup');
+            const emailField = document.getElementById('auth-field-email');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const modalTitle = document.getElementById('auth-modal-title');
+            const userLabel = document.getElementById('auth-label-user');
+
+            if (mode === 'login') {
+                tabLogin.className = "flex-1 py-1.5 rounded-md bg-dark-800 text-white font-semibold";
+                tabSignup.className = "flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200";
+                emailField.classList.add('hidden');
+                submitBtn.textContent = 'Sign In';
+                modalTitle.textContent = 'Sign in to CodeBox';
+                userLabel.textContent = 'Username or Email';
+            } else {
+                tabSignup.className = "flex-1 py-1.5 rounded-md bg-dark-800 text-white font-semibold";
+                tabLogin.className = "flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200";
+                emailField.classList.remove('hidden');
+                submitBtn.textContent = 'Create Free Account';
+                modalTitle.textContent = 'Create your CodeBox Account';
+                userLabel.textContent = 'Username';
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('auth-error-msg');
+            errorEl.classList.add('hidden');
+
+            const identifier = document.getElementById('auth-input-identifier').value.trim();
+            const password = document.getElementById('auth-input-password').value;
+
+            try {
+                if (AppState.authMode === 'login') {
+                    const res = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier, password })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                    onAuthSuccess(data.user, data.stats);
+                    showToast('Welcome back, ' + data.user.username + '!', 'success');
+                } else {
+                    const email = document.getElementById('auth-input-email').value.trim();
+                    const res = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: identifier, email, password })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+                    onAuthSuccess(data.user);
+                    showToast('Account created successfully!', 'success');
+                }
+                closeAuthModal();
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function demoLogin() {
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier: 'demo_coder', password: 'demo123' })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Demo login failed');
+
+                onAuthSuccess(data.user, data.stats);
+                closeAuthModal();
+                showToast('Logged in as demo_coder!', 'success');
+            } catch (err) {
+                showToast('Demo login error: ' + err.message, 'error');
+            }
+        }
+
+        function onAuthSuccess(user, stats = null) {
+            AppState.currentUser = user;
+            localStorage.setItem('codebox_user', JSON.stringify(user));
+            updateUserUI();
+            if (stats) updateStatsUI(stats);
+            else loadUserStats(user.user_id);
+            loadProblemsCatalog();
+            loadUserSubmissions(user.user_id);
+            loadLeaderboard();
+        }
+
+        function logoutUser() {
+            AppState.currentUser = null;
+            localStorage.removeItem('codebox_user');
+            updateUserUI();
+            updateStatsUI({ solved_easy: 0, solved_medium: 0, solved_hard: 0, total_solved: 0, total_score: 0, total_submissions: 0 });
+            loadProblemsCatalog();
+            document.getElementById('user-submissions-list').innerHTML = `
+                <div class="py-8 text-center text-slate-500 text-xs">Sign in to view your submissions history.</div>
+            `;
+            showToast('You have been logged out.', 'info');
+        }
+
+        async function loadUserStats(userId) {
+            try {
+                const res = await fetch(`/api/problems?userId=${userId}`);
+                // Refresh problems to update checkmarks
+                loadProblemsCatalog();
+            } catch (e) {}
+        }
+
+        function updateStatsUI(stats) {
+            document.getElementById('stat-total-score').textContent = stats.total_score || 0;
+            document.getElementById('header-user-score').textContent = `★ ${stats.total_score || 0} pts`;
+            document.getElementById('stat-total-solved').textContent = stats.total_solved || 0;
+            document.getElementById('stat-solved-easy').textContent = stats.solved_easy || 0;
+            document.getElementById('stat-solved-medium').textContent = stats.solved_medium || 0;
+            document.getElementById('stat-solved-hard').textContent = stats.solved_hard || 0;
+            document.getElementById('stat-total-submissions').textContent = stats.total_submissions || 0;
+
+            const pct = Math.min(100, Math.round(((stats.total_solved || 0) / 30) * 100));
+            document.getElementById('stat-progress-bar').style.width = pct + '%';
+            document.getElementById('badge-solved-count').textContent = `${stats.total_solved || 0}/30`;
+        }
+
+        // ====================================================================
+        // PROBLEM CATALOG & LEETCODE ARENA
+        // ====================================================================
+        async function loadProblemsCatalog() {
+            try {
+                const userId = AppState.currentUser ? AppState.currentUser.user_id : 0;
+                const res = await fetch(`/api/problems?userId=${userId}`);
+                AppState.problems = await res.json();
+                renderProblemList(AppState.problems);
+
+                // Auto-select problem #1 on first load if none selected
+                if (!AppState.selectedProblem && AppState.problems.length > 0) {
+                    selectProblem(AppState.problems[0].problem_id);
+                }
+            } catch (e) {
+                console.error("Failed to load problems catalog", e);
+            }
+        }
+
+        function renderProblemList(problems) {
+            const container = document.getElementById('problem-list-container');
+            container.innerHTML = '';
+
+            let solvedCount = 0;
+            problems.forEach(p => {
+                if (p.is_solved) solvedCount++;
+                const item = document.createElement('div');
+                item.className = `p-3 hover:bg-dark-800/80 cursor-pointer transition flex items-center justify-between ${AppState.selectedProblem && AppState.selectedProblem.problem_id === p.problem_id ? 'bg-dark-800 border-l-2 border-blue-500' : ''}`;
+                item.onclick = () => selectProblem(p.problem_id);
+
+                const diffColor = p.difficulty === 'Easy' ? 'text-emerald-400 bg-emerald-500/10' :
+                                  p.difficulty === 'Medium' ? 'text-amber-400 bg-amber-500/10' : 'text-rose-400 bg-rose-500/10';
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2.5 truncate">
+                        <span class="w-4 text-center">
+                            ${p.is_solved ? '<i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>' : '<span class="text-slate-600 font-mono text-[10px]">#</span>'}
+                        </span>
+                        <div class="truncate">
+                            <div class="font-medium text-slate-200 truncate">${p.problem_id}. ${p.title}</div>
+                            <div class="text-[10px] text-slate-500">${p.category}</div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${diffColor} shrink-0">${p.difficulty}</span>
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById('badge-solved-count').textContent = `${solvedCount}/30`;
+        }
+
+        function filterProblemList() {
+            const query = document.getElementById('problem-search-input').value.toLowerCase();
+            const diff = document.getElementById('filter-difficulty').value;
+            const cat = document.getElementById('filter-category').value;
+
+            const filtered = AppState.problems.filter(p => {
+                const matchQuery = p.title.toLowerCase().includes(query) || p.category.toLowerCase().includes(query);
+                const matchDiff = diff === 'all' || p.difficulty === diff;
+                const matchCat = cat === 'all' || p.category === cat;
+                return matchQuery && matchDiff && matchCat;
+            });
+
+            renderProblemList(filtered);
+        }
+
+        async function selectProblem(problemId) {
+            try {
+                const res = await fetch(`/api/problems/${problemId}`);
+                const detail = await res.json();
+                AppState.selectedProblem = detail;
+
+                // Update Arena Header
+                document.getElementById('arena-problem-number').textContent = `#${detail.problem_id}`;
+                document.getElementById('arena-problem-title').textContent = detail.title;
+                const diffBadge = document.getElementById('arena-problem-diff');
+                diffBadge.textContent = detail.difficulty;
+                diffBadge.className = detail.difficulty === 'Easy' ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                      detail.difficulty === 'Medium' ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                      'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                document.getElementById('arena-problem-cat').textContent = detail.category;
+
+                const solvedBadge = document.getElementById('arena-problem-solved-badge');
+                if (detail.is_solved) solvedBadge.classList.remove('hidden');
+                else solvedBadge.classList.add('hidden');
+
+                // Update Description Content
+                const contentEl = document.getElementById('arena-problem-content');
+                let sampleHtml = '';
+                if (detail.sample_test_cases && detail.sample_test_cases.length > 0) {
+                    sampleHtml = `
+                        <div class="space-y-3 mt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sample Test Case</h4>
+                            ${detail.sample_test_cases.map((stc, idx) => `
+                                <div class="bg-dark-950 border border-slate-800 rounded-lg p-3 text-xs font-mono space-y-2">
+                                    <div>
+                                        <div class="text-[10px] text-slate-500 uppercase font-bold">Input (stdin):</div>
+                                        <div class="text-slate-200 whitespace-pre-wrap bg-dark-900/60 p-2 rounded mt-1">${escapeHtml(stc.input)}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-slate-500 uppercase font-bold">Expected Output (stdout):</div>
+                                        <div class="text-emerald-400 whitespace-pre-wrap bg-dark-900/60 p-2 rounded mt-1">${escapeHtml(stc.expected_output)}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                contentEl.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="prose prose-invert max-w-none text-slate-300 text-sm">
+                            ${detail.description}
+                        </div>
+                        ${detail.constraints ? `
+                            <div class="bg-dark-950/80 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
+                                <div class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Constraints</div>
+                                <div class="text-slate-300 font-mono">${detail.constraints}</div>
+                            </div>
+                        ` : ''}
+                        ${sampleHtml}
+                    </div>
+                `;
+
+                // Load starter code into Monaco editor
+                loadArenaStarterCode();
+
+                // Clear previous judge drawer results
+                resetJudgeDrawer();
+
+                // Re-render catalog to update active highlight
+                renderProblemList(AppState.problems);
+            } catch (e) {
+                console.error("Failed to load problem details", e);
+            }
+        }
+
+        function onArenaLanguageChange() {
+            AppState.arenaLanguage = document.getElementById('arena-lang-select').value;
+            loadArenaStarterCode();
+        }
+
+        function loadArenaStarterCode() {
+            if (!AppState.selectedProblem || !AppState.arenaEditor) return;
+
+            let code = '';
+            let monacoLang = 'cpp';
+
+            if (AppState.arenaLanguage === 'cpp') {
+                code = AppState.selectedProblem.starter_cpp || '// C++ starter code';
+                monacoLang = 'cpp';
+            } else if (AppState.arenaLanguage === 'python') {
+                code = AppState.selectedProblem.starter_python || '# Python starter code';
+                monacoLang = 'python';
+            } else if (AppState.arenaLanguage === 'java') {
+                code = AppState.selectedProblem.starter_java || '// Java starter code';
+                monacoLang = 'java';
+            }
+
+            monaco.editor.setModelLanguage(AppState.arenaEditor.getModel(), monacoLang);
+            AppState.arenaEditor.setValue(code);
+        }
+
+        function resetArenaStarterCode() {
+            if (confirm("Reset code editor to the problem's starter template?")) {
+                loadArenaStarterCode();
+            }
+        }
+
+        function toggleProblemSidebar() {
+            const sidebar = document.getElementById('problem-catalog-sidebar');
+            sidebar.classList.toggle('hidden');
+            setTimeout(() => { if (AppState.arenaEditor) AppState.arenaEditor.layout(); }, 50);
+        }
+
+        // ====================================================================
+        // JUDGE EXECUTION (RUN SAMPLE & SUBMIT SOLUTION)
+        // ====================================================================
+        async function runArenaCode(sampleOnly = false) {
+            if (!AppState.selectedProblem) return;
+
+            const btn = sampleOnly ? document.getElementById('btn-run-sample') : document.getElementById('btn-submit-solution');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Judging in Docker...</span>`;
+            btn.disabled = true;
+
+            const userId = AppState.currentUser ? AppState.currentUser.user_id : 1;
+            const payload = {
+                userId: userId,
+                problemId: AppState.selectedProblem.problem_id,
+                language: AppState.arenaLanguage,
+                code: AppState.arenaEditor.getValue(),
+                sampleOnly: sampleOnly
+            };
+
+            try {
+                const res = await fetch('/api/leetcode/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || 'Execution failed');
+
+                renderJudgeResults(result, sampleOnly);
+
+                if (!sampleOnly) {
+                    if (result.verdict === 'Accepted') {
+                        showToast(`Accepted! All ${result.passed_cases}/${result.total_cases} test cases passed!`, 'success');
+                    } else {
+                        showToast(`${result.verdict} (${result.passed_cases}/${result.total_cases} passed)`, 'error');
+                    }
+                    // Refresh stats & submissions
+                    if (AppState.currentUser) {
+                        loadUserStats(AppState.currentUser.user_id);
+                        loadUserSubmissions(AppState.currentUser.user_id);
+                        loadLeaderboard();
+                    }
+                } else {
+                    showToast(`Sample run complete: ${result.verdict}`, 'info');
+                }
+            } catch (err) {
+                showToast(`Execution error: ${err.message}`, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function renderJudgeResults(result, sampleOnly) {
+            const tag = document.getElementById('judge-verdict-tag');
+            tag.classList.remove('hidden');
+            tag.textContent = result.verdict;
+
+            if (result.verdict === 'Accepted') {
+                tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            } else if (result.verdict === 'Wrong Answer') {
+                tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+            } else {
+                tag.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            }
+
+            // Metrics
+            const metrics = document.getElementById('judge-perf-metrics');
+            metrics.classList.remove('hidden');
+            document.getElementById('metric-runtime').textContent = `${result.execution_time_ms} ms`;
+            document.getElementById('metric-memory').textContent = `${Math.round(result.memory_used_kb / 1024)} MB`;
+            document.getElementById('metric-passed').textContent = `${result.passed_cases}/${result.total_cases} Passed`;
+
+            // Test Case Pills
+            const tabsContainer = document.getElementById('judge-tc-tabs');
+            tabsContainer.innerHTML = '<div class="text-[10px] uppercase font-bold text-slate-500 px-2 py-1">Cases</div>';
+
+            if (result.test_cases && result.test_cases.length > 0) {
+                result.test_cases.forEach((tc, idx) => {
+                    const pill = document.createElement('button');
+                    const isPass = tc.verdict === 'Accepted';
+                    pill.className = `w-full text-left px-2.5 py-1.5 rounded text-[11px] font-medium flex items-center justify-between transition ${idx === 0 ? 'bg-dark-800 text-white' : 'text-slate-400 hover:text-slate-200'}`;
+                    pill.onclick = () => selectTestCaseDetail(tc, pill, tabsContainer);
+                    pill.innerHTML = `
+                        <span>${tc.is_sample ? 'Sample' : `Case ${idx + 1}`}</span>
+                        <i class="fa-solid ${isPass ? 'fa-check text-emerald-400' : 'fa-xmark text-rose-400'} text-[10px]"></i>
+                    `;
+                    tabsContainer.appendChild(pill);
+                });
+
+                // Display first testcase by default
+                const firstPill = tabsContainer.querySelectorAll('button')[0];
+                selectTestCaseDetail(result.test_cases[0], firstPill, tabsContainer);
+            }
+        }
+
+        function selectTestCaseDetail(tc, activeBtn, container) {
+            container.querySelectorAll('button').forEach(b => {
+                b.className = "w-full text-left px-2.5 py-1.5 rounded text-[11px] font-medium flex items-center justify-between text-slate-400 hover:text-slate-200 transition";
+            });
+            if (activeBtn) activeBtn.className = "w-full text-left px-2.5 py-1.5 rounded text-[11px] font-medium flex items-center justify-between bg-dark-800 text-white transition";
+
+            const detailEl = document.getElementById('judge-tc-detail');
+            detailEl.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Verdict: <b class="${tc.verdict === 'Accepted' ? 'text-emerald-400' : 'text-rose-400'}">${tc.verdict}</b></span>
+                        <span class="text-slate-500 font-mono">${tc.execution_time_ms} ms</span>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-500 uppercase font-bold">Standard Input (stdin):</div>
+                        <pre class="bg-dark-950 p-2 rounded border border-slate-800 text-slate-200 mt-1 whitespace-pre-wrap">${escapeHtml(tc.input)}</pre>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-500 uppercase font-bold">Expected Output:</div>
+                        <pre class="bg-dark-950 p-2 rounded border border-slate-800 text-emerald-400 mt-1 whitespace-pre-wrap">${escapeHtml(tc.expected_output)}</pre>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-500 uppercase font-bold">Actual Output (stdout):</div>
+                        <pre class="bg-dark-950 p-2 rounded border border-slate-800 ${tc.verdict === 'Accepted' ? 'text-slate-200' : 'text-rose-300'} mt-1 whitespace-pre-wrap">${escapeHtml(tc.actual_output || '(no output)')}</pre>
+                    </div>
+                    ${tc.stderr ? `
+                        <div>
+                            <div class="text-[10px] text-rose-400 uppercase font-bold">Standard Error (stderr):</div>
+                            <pre class="bg-dark-950 p-2 rounded border border-rose-900/40 text-rose-400 mt-1 whitespace-pre-wrap">${escapeHtml(tc.stderr)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function resetJudgeDrawer() {
+            document.getElementById('judge-verdict-tag').classList.add('hidden');
+            document.getElementById('judge-perf-metrics').classList.add('hidden');
+            document.getElementById('judge-tc-tabs').innerHTML = '<div class="text-[10px] uppercase font-bold text-slate-500 px-2 py-1">Cases</div>';
+            document.getElementById('judge-tc-detail').innerHTML = `
+                <div class="text-slate-500 text-center py-10 font-sans">
+                    Click "Run Sample" to test against examples, or "Submit Solution" for full multi-testcase evaluation.
+                </div>
+            `;
+        }
+
+        // ====================================================================
+        // VS CODE STUDIO (PLAYGROUND) EXECUTION
+        // ====================================================================
+        function switchPlaygroundFile(lang) {
+            if (AppState.playgroundEditor) {
+                AppState.playgroundCodeMap[AppState.playgroundFile] = AppState.playgroundEditor.getValue();
+            }
+            AppState.playgroundFile = lang;
+
+            const langs = ['cpp', 'python', 'java'];
+            langs.forEach(l => {
+                const tab = document.getElementById(`tab-play-${l}`);
+                if (l === lang) {
+                    tab.className = "px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5";
+                } else {
+                    tab.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5";
+                }
+            });
+
+            const monacoLang = lang === 'cpp' ? 'cpp' : (lang === 'python' ? 'python' : 'java');
+            monaco.editor.setModelLanguage(AppState.playgroundEditor.getModel(), monacoLang);
+            AppState.playgroundEditor.setValue(AppState.playgroundCodeMap[lang]);
+            document.getElementById('sb-lang-label').textContent = lang === 'cpp' ? 'C++17' : (lang === 'python' ? 'Python 3' : 'Java 17');
+        }
+
+        async function runPlaygroundCode() {
+            const btn = document.getElementById('btn-run-playground');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Executing...</span>`;
+            btn.disabled = true;
+
+            const code = AppState.playgroundEditor.getValue();
+            const stdin = document.getElementById('playground-stdin-input').value;
+            const stdoutEl = document.getElementById('playground-stdout');
+
+            stdoutEl.textContent = 'Launching isolated Docker container (256MB RAM limit, 2s SIGKILL watchdog)...';
+
+            try {
+                const res = await fetch('/api/playground/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        language: AppState.playgroundFile,
+                        code: code,
+                        stdin: stdin
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Execution failed');
+
+                const statusPill = document.getElementById('playground-status-pill');
+                const runtimePill = document.getElementById('playground-runtime-pill');
+
+                statusPill.classList.remove('hidden');
+                runtimePill.classList.remove('hidden');
+
+                statusPill.textContent = data.status;
+                runtimePill.textContent = `${data.executionTimeMs} ms`;
+
+                if (data.status === 'Accepted') {
+                    statusPill.className = 'text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                } else {
+                    statusPill.className = 'text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                }
+
+                let outputText = '';
+                if (data.stdout) outputText += data.stdout;
+                if (data.stderr) outputText += (outputText ? '\n--- STDERR ---\n' : '') + data.stderr;
+                if (!outputText) outputText = '(Execution finished cleanly with no output)';
+
+                stdoutEl.textContent = outputText;
+                showToast(`Run finished: ${data.status} (${data.executionTimeMs}ms)`, data.status === 'Accepted' ? 'success' : 'error');
+            } catch (err) {
+                stdoutEl.textContent = 'Execution Error: ' + err.message;
+                showToast(err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function clearPlaygroundConsole() {
+            document.getElementById('playground-stdout').textContent = '';
+            document.getElementById('playground-status-pill').classList.add('hidden');
+            document.getElementById('playground-runtime-pill').classList.add('hidden');
+        }
+
+        // ====================================================================
+        // LEADERBOARD & USER SUBMISSIONS
+        // ====================================================================
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch('/api/leaderboard');
+                const users = await res.json();
+                const tbody = document.getElementById('leaderboard-tbody');
+                tbody.innerHTML = '';
+
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No users ranked yet.</td></tr>';
+                    return;
+                }
+
+                users.forEach(u => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-dark-800/40 transition";
+
+                    let rankBadge = `<span class="font-mono text-slate-400">${u.rank}</span>`;
+                    if (u.rank === 1) rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400/20 text-amber-400 font-bold">🥇</span>`;
+                    else if (u.rank === 2) rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300/20 text-slate-300 font-bold">🥈</span>`;
+                    else if (u.rank === 3) rankBadge = `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-700/20 text-amber-600 font-bold">🥉</span>`;
+
+                    const isCurrent = AppState.currentUser && AppState.currentUser.user_id === u.user_id;
+
+                    row.innerHTML = `
+                        <td class="py-2.5 px-3 text-center">${rankBadge}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-200 flex items-center space-x-2">
+                            <span>${escapeHtml(u.username)}</span>
+                            ${isCurrent ? '<span class="text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.2 rounded font-semibold">You</span>' : ''}
+                        </td>
+                        <td class="py-2.5 px-3 text-center font-mono text-emerald-400">${u.solved_count} / 30</td>
+                        <td class="py-2.5 px-3 text-center font-mono font-bold text-amber-400">★ ${u.total_score}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-slate-400">${u.total_submissions}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                console.error("Failed to load leaderboard", e);
+            }
+        }
+
+        async function loadUserSubmissions(userId) {
+            try {
+                const res = await fetch(`/api/user/${userId}/submissions`);
+                const subs = await res.json();
+                const list = document.getElementById('user-submissions-list');
+                const badge = document.getElementById('user-sub-count-badge');
+                badge.textContent = `${subs.length} total`;
+                list.innerHTML = '';
+
+                if (subs.length === 0) {
+                    list.innerHTML = '<div class="py-8 text-center text-slate-500 text-xs">No submissions yet. Solve a problem in LeetCode Arena!</div>';
+                    return;
+                }
+
+                subs.forEach(s => {
+                    const card = document.createElement('div');
+                    card.className = "bg-dark-900/80 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs hover:border-slate-700 transition";
+
+                    const isAccepted = s.verdict === 'Accepted';
+                    const badgeClass = isAccepted ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+
+                    card.innerHTML = `
+                        <div class="space-y-0.5">
+                            <div class="font-medium text-slate-200">${s.problem_id}. ${escapeHtml(s.problem_title)}</div>
+                            <div class="text-[10px] text-slate-500 flex items-center space-x-2">
+                                <span>${escapeHtml(s.language)}</span>
+                                <span>•</span>
+                                <span>${s.submitted_at}</span>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeClass}">${s.verdict}</span>
+                            <div class="text-[10px] text-slate-400 font-mono">${s.passed_cases}/${s.total_cases} passed • ${s.execution_time_ms}ms</div>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (e) {
+                console.error("Failed to load submissions", e);
+            }
+        }
+
+        // ====================================================================
+        // UTILITIES & TOAST NOTIFICATIONS
+        // ====================================================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-blue-600');
+            const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-info');
+
+            toast.className = `${bg} text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-2.5 text-xs font-medium pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
 </body>
-
 </html>

@@ -80,12 +80,17 @@ void QueueScheduler::processTask(shared_ptr<Task> task) {
     LanguageConfig langConfig;
 
     string sourceFile;
+    string inputFile;
 
     struct FileGuard {
         FileManager& mgr;
-        string& path;
-        ~FileGuard() { if (!path.empty()) mgr.deleteFile(path); }
-    } fileGuard{fm, sourceFile};
+        string& sPath;
+        string& iPath;
+        ~FileGuard() { 
+            if (!sPath.empty()) mgr.deleteFile(sPath); 
+            if (!iPath.empty()) mgr.deleteFile(iPath);
+        }
+    } fileGuard{fm, sourceFile, inputFile};
 
     try {
         string ext = langConfig.getFileExtension(task->language);
@@ -108,7 +113,15 @@ void QueueScheduler::processTask(shared_ptr<Task> task) {
             return;
         }
 
-        DockerSandbox::CommandResult exec = sandbox.runCode(task->language, sourceFile);
+        if (!task->stdinInput.empty()) {
+            inputFile = fm.saveInputToFile(task->stdinInput);
+        }
+
+        auto start = chrono::steady_clock::now();
+        DockerSandbox::CommandResult exec = sandbox.runCode(task->language, sourceFile, inputFile);
+        auto end = chrono::steady_clock::now();
+        int elapsedMs = static_cast<int>(chrono::duration_cast<chrono::milliseconds>(end - start).count());
+
         string evaluatedStatus = evaluator.evaluate(exec, task->language);
 
         {
@@ -116,6 +129,7 @@ void QueueScheduler::processTask(shared_ptr<Task> task) {
             task->status = evaluatedStatus;
             task->stdout = exec.stdout;
             task->stderr = exec.stderr;
+            task->executionTimeMs = elapsedMs;
             task->finished = true;
         }
         task->cv.notify_all();

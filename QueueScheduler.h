@@ -15,6 +15,8 @@ struct Task {
     string id;
     string language;
     string code;
+    string stdinInput;
+    int executionTimeMs = 0;
     string status;    // "Accepted", "Time Limit Exceeded", etc.
     string stdout;
     string stderr;

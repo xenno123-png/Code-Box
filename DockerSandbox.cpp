@@ -76,8 +76,8 @@ DockerSandbox::CommandResult DockerSandbox::executeCommand(const string& shellCo
     return result;
 }
 
-DockerSandbox::CommandResult DockerSandbox::runCode(const string& language, const string& sourceFile) {
+DockerSandbox::CommandResult DockerSandbox::runCode(const string& language, const string& sourceFile, const string& inputFile) {
     LanguageConfig langConfig;
-    string dockerCommand = langConfig.getRunCommand(language, sourceFile);
+    string dockerCommand = langConfig.getRunCommand(language, sourceFile, inputFile);
     return executeCommand(dockerCommand);
 }

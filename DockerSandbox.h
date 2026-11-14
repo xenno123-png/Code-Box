@@ -14,5 +14,5 @@ public:
     };
 
     CommandResult executeCommand(const string& shellCommand);
-    CommandResult runCode(const string& language, const string& sourceFile);
+    CommandResult runCode(const string& language, const string& sourceFile, const string& inputFile = "");
 };

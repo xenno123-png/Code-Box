@@ -21,7 +21,8 @@ SRCS     := main.cpp \
             DockerSandbox.cpp \
             FileManager.cpp \
             LanguageConfig.cpp \
-            ResultEvaluator.cpp
+            ResultEvaluator.cpp \
+            DatabaseManager.cpp
 
 OBJS     := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS     := $(OBJS:.o=.d)
@@ -51,7 +52,7 @@ DEP_FLAGS := -MMD -MP
 
 # Final compiler flags
 CXXFLAGS += $(OPT_FLAGS) $(WARN_FLAGS) $(DEP_FLAGS)
-LDFLAGS  += -pthread
+LDFLAGS  += -pthread -lsqlite3
 
 # Cross-platform command helpers
 ifeq ($(OS),Windows_NT)

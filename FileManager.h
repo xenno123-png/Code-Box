@@ -8,5 +8,6 @@ using namespace std;
 class FileManager {
 public:
     string saveCodeToFile(const string& code, const string& extension);
+    string saveInputToFile(const string& input);
     void deleteFile(const string& filepath);
 };
