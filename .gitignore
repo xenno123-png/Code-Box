@@ -9,3 +9,6 @@ server
 *.db-wal
 *.db-shm
 __pycache__/
+
+# Local explanation & viva study guides (not pushed to GitHub)
+explanation/
