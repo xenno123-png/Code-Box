@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeBox 3.0 | Containerized Cloud Coding & DSA Judge</title>
+    <title>CodeBox | Online Coding & DSA Practice Platform</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,6 +25,7 @@
                             900: '#0f172a',
                             850: '#131d35',
                             800: '#1e293b',
+                            750: '#283548',
                             700: '#334155',
                             600: '#475569'
                         }
@@ -74,9 +75,6 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .glow-accent {
-            box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.3);
-        }
         .pulse-dot {
             box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
             animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);
@@ -86,24 +84,51 @@
                 box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
             }
         }
+        /* Resizer Dividers */
+        .resizer-v {
+            width: 6px;
+            cursor: col-resize;
+            background-color: #1e293b;
+            position: relative;
+            z-index: 20;
+            transition: background-color 0.15s ease;
+            flex-shrink: 0;
+        }
+        .resizer-v:hover, .resizer-v.active {
+            background-color: #3b82f6;
+        }
+        .resizer-h {
+            height: 6px;
+            cursor: row-resize;
+            background-color: #1e293b;
+            position: relative;
+            z-index: 20;
+            transition: background-color 0.15s ease;
+            flex-shrink: 0;
+        }
+        .resizer-h:hover, .resizer-h.active {
+            background-color: #3b82f6;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden bg-dark-950 text-slate-100 select-none">
 
+    <!-- Transparent Drag Shield to prevent Monaco iframe pointer-capture glitch -->
+    <div id="drag-overlay" class="hidden fixed inset-0 z-50 select-none"></div>
+
     <!-- Top Navigation Header -->
     <header class="h-14 bg-dark-900 border-b border-dark-700/60 px-4 flex items-center justify-between shrink-0 z-30">
-        <!-- Brand Logo & Phase Badge -->
+        <!-- Brand Logo (Clean CodeBox branding) -->
         <div class="flex items-center space-x-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
                 <i class="fa-solid fa-cube"></i>
             </div>
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CodeBox</span>
-                <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">Phase 3</span>
             </div>
             <div class="hidden md:flex items-center space-x-1.5 ml-4 pl-4 border-l border-dark-700/60 text-xs text-slate-400">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
-                <span>Docker Daemon Online</span>
+                <span>Isolated Execution Engine</span>
             </div>
         </div>
 
@@ -115,33 +140,26 @@
             </button>
             <button id="nav-btn-leetcode" onclick="switchView('leetcode')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200">
                 <i class="fa-solid fa-code"></i>
-                <span>LeetCode DSA Arena</span>
+                <span>Practice Questions</span>
                 <span id="badge-solved-count" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono">0/30</span>
             </button>
             <button id="nav-btn-playground" onclick="switchView('playground')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200">
                 <i class="fa-solid fa-terminal"></i>
-                <span>VS Code Studio</span>
+                <span>Personal Coding Platform</span>
             </button>
         </nav>
 
         <!-- User / Auth Profile Area -->
         <div class="flex items-center space-x-3">
-            <div id="auth-logged-in" class="hidden flex items-center space-x-3">
+            <div id="auth-logged-in" class="flex items-center space-x-3">
                 <div class="flex items-center space-x-2 bg-dark-800/80 px-2.5 py-1 rounded-full border border-dark-700/40">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-xs font-bold text-white uppercase shadow" id="user-avatar-initial">D</div>
-                    <span id="header-username" class="text-xs font-medium text-slate-200">demo_coder</span>
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase shadow" id="user-avatar-initial">U</div>
+                    <span id="header-username" class="text-xs font-medium text-slate-200">User</span>
                     <span id="header-user-score" class="text-[11px] font-mono text-amber-400 ml-1">★ 0 pts</span>
                 </div>
-                <button onclick="logoutUser()" title="Logout" class="text-slate-400 hover:text-rose-400 p-1.5 rounded text-xs transition">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
-            <div id="auth-logged-out" class="flex items-center space-x-2">
-                <button onclick="openAuthModal('login')" class="text-xs px-3 py-1.5 rounded-md text-slate-300 hover:text-white bg-dark-800 hover:bg-dark-700 border border-dark-700/60 transition">
-                    Sign In
-                </button>
-                <button onclick="demoLogin()" class="text-xs px-3 py-1.5 rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-blue-500/20 transition">
-                    <i class="fa-solid fa-bolt mr-1"></i> 1-Click Demo
+                <button onclick="logoutUser()" title="Logout of CodeBox" class="text-xs px-2.5 py-1.5 rounded-md bg-dark-800 hover:bg-rose-950/40 hover:text-rose-400 border border-dark-700/60 text-slate-400 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    <span>Logout</span>
                 </button>
             </div>
         </div>
@@ -162,23 +180,23 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
                         <div>
                             <div class="flex items-center space-x-2 mb-1">
-                                <span class="text-xs font-semibold tracking-wider uppercase text-blue-400">CodeBox Engine v3.0</span>
+                                <span class="text-xs font-semibold tracking-wider uppercase text-blue-400">CodeBox Engine</span>
                                 <span class="text-slate-600">•</span>
-                                <span class="text-xs text-emerald-400 flex items-center"><i class="fa-solid fa-shield-halved mr-1"></i> Production Ready</span>
+                                <span class="text-xs text-emerald-400 flex items-center"><i class="fa-solid fa-shield-halved mr-1"></i> Multi-Language Containerized Platform</span>
                             </div>
-                            <h1 class="text-2xl font-bold tracking-tight text-white">Welcome back, <span id="dash-username" class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Guest</span>!</h1>
+                            <h1 class="text-2xl font-bold tracking-tight text-white">Welcome, <span id="dash-username" class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">User</span>!</h1>
                             <p class="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                                Complete online coding platform powered by C++17, SQLite 3NF relational catalog, 30+ DSA problems, 3-worker FCFS thread pool, and Docker sandboxes with 256MB cgroups RAM & 2.0s SIGKILL limits.
+                                Production-grade online coding platform powered by C++17, SQLite 3NF relational catalog, 30+ DSA problems, and Docker execution sandboxes supporting C (GCC), C++17, Python 3, and Java 17.
                             </p>
                         </div>
                         <div class="flex items-center space-x-3 shrink-0">
                             <button onclick="switchView('leetcode')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2">
                                 <i class="fa-solid fa-play"></i>
-                                <span>Solve Next Problem</span>
+                                <span>Practice Questions</span>
                             </button>
                             <button onclick="switchView('playground')" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center space-x-2">
                                 <i class="fa-solid fa-code"></i>
-                                <span>Open Playground</span>
+                                <span>Personal Coding Platform</span>
                             </button>
                         </div>
                     </div>
@@ -198,8 +216,8 @@
                             <span>Scheduler: <b class="text-slate-200 font-mono">3 FCFS Threads</b></span>
                         </div>
                         <div class="flex items-center space-x-2 text-slate-400">
-                            <i class="fa-solid fa-database text-emerald-400"></i>
-                            <span>Storage: <b class="text-slate-200 font-mono">SQLite 3NF (codebox.db)</b></span>
+                            <i class="fa-solid fa-code text-emerald-400"></i>
+                            <span>Languages: <b class="text-slate-200 font-mono">C, C++, Python, Java</b></span>
                         </div>
                     </div>
                 </div>
@@ -312,7 +330,7 @@
                                 <tbody id="leaderboard-tbody" class="divide-y divide-slate-800/40">
                                     <tr>
                                         <td colspan="5" class="py-8 text-center text-slate-500">
-                                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading leaderboard...
+                                            No registered users ranked yet.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -332,7 +350,7 @@
 
                         <div id="user-submissions-list" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
                             <div class="py-8 text-center text-slate-500 text-xs">
-                                No submissions yet. Solve a problem in LeetCode Arena!
+                                No submissions yet. Solve a problem in Practice Questions!
                             </div>
                         </div>
                     </div>
@@ -343,15 +361,16 @@
         </div>
 
         <!-- ==================================================================== -->
-        <!-- VIEW 2: LEETCODE DSA ARENA                                           -->
+        <!-- VIEW 2: PRACTICE QUESTIONS (RESIZABLE SPLIT PANE)                     -->
         <!-- ==================================================================== -->
         <div id="view-leetcode" class="h-full hidden flex flex-col overflow-hidden">
             <!-- Problem Sub-Header & Controls -->
-            <div class="h-12 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 text-xs">
+            <div class="h-12 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 text-xs z-20">
                 <div class="flex items-center space-x-3">
-                    <button id="btn-toggle-problem-list" onclick="toggleProblemSidebar()" class="px-2.5 py-1.5 rounded bg-dark-800 hover:bg-dark-700 text-slate-300 border border-slate-700 transition flex items-center space-x-1.5">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span>Problem Catalog</span>
+                    <button id="btn-toggle-problem-list" onclick="toggleProblemSidebar()" class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center space-x-2 font-medium">
+                        <i class="fa-solid fa-list-ul text-blue-400"></i>
+                        <span>Problems List</span>
+                        <span id="catalog-drawer-badge" class="ml-1 text-[10px] bg-slate-700 px-1.5 py-0.2 rounded text-slate-300">30</span>
                     </button>
                     <div class="flex items-center space-x-2">
                         <span id="arena-problem-number" class="font-mono text-slate-400 font-bold">#1</span>
@@ -364,47 +383,59 @@
 
                 <!-- Language Selector & Action Buttons -->
                 <div class="flex items-center space-x-2">
-                    <div class="flex items-center space-x-1 bg-dark-800 px-2 py-1 rounded border border-slate-700">
+                    <div class="flex items-center space-x-1.5 bg-dark-800 px-2.5 py-1 rounded-lg border border-slate-700">
                         <label for="arena-lang-select" class="text-slate-400 text-[11px] font-medium mr-1">Language:</label>
                         <select id="arena-lang-select" onchange="onArenaLanguageChange()" class="bg-transparent text-slate-100 font-medium text-xs focus:outline-none cursor-pointer">
-                            <option value="cpp" class="bg-dark-900 text-white">C++17 (g++ -O2)</option>
+                            <option value="c" class="bg-dark-900 text-white">C (GCC)</option>
+                            <option value="cpp" selected class="bg-dark-900 text-white">C++17 (g++ -O2)</option>
                             <option value="python" class="bg-dark-900 text-white">Python 3 (python:3)</option>
                             <option value="java" class="bg-dark-900 text-white">Java 17 (openjdk:17)</option>
                         </select>
                     </div>
-                    <button onclick="resetArenaStarterCode()" title="Reset to default starter template" class="p-1.5 px-2 rounded bg-dark-800 hover:bg-dark-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition">
+                    <button onclick="resetArenaStarterCode()" title="Reset to default starter template" class="p-1.5 px-2.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition">
                         <i class="fa-solid fa-arrow-rotate-left"></i>
                     </button>
-                    <button id="btn-run-sample" onclick="runArenaCode(true)" class="px-3.5 py-1.5 rounded-md bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 font-semibold transition flex items-center space-x-1.5">
+                    <button id="btn-run-sample" onclick="runArenaCode(true)" class="px-3.5 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 font-semibold transition flex items-center space-x-1.5">
                         <i class="fa-solid fa-play text-blue-400 text-[11px]"></i>
                         <span>Run Sample</span>
                     </button>
-                    <button id="btn-submit-solution" onclick="runArenaCode(false)" class="px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center space-x-1.5 shadow-sm shadow-emerald-600/30">
+                    <button id="btn-submit-solution" onclick="runArenaCode(false)" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center space-x-1.5 shadow-sm shadow-emerald-600/30">
                         <i class="fa-solid fa-cloud-arrow-up text-[11px]"></i>
                         <span>Submit Solution</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Split Arena Workspace Body -->
-            <div class="flex-1 flex overflow-hidden relative">
+            <!-- Workspace Body: Split Pane with Draggable Resizers -->
+            <div id="arena-workspace-container" class="flex-1 flex overflow-hidden relative">
 
-                <!-- Collapsible Problem Catalog Sidebar (Overlay or Left Pane) -->
-                <aside id="problem-catalog-sidebar" class="w-80 bg-dark-900 border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300 z-20">
+                <!-- Collapsible Problem Catalog Drawer (Overlaid / Side Panel) -->
+                <aside id="problem-catalog-sidebar" class="hidden absolute top-0 left-0 bottom-0 w-80 bg-dark-900 border-r border-slate-800 flex flex-col shrink-0 z-30 shadow-2xl transition-all duration-200">
+                    <!-- Drawer Header & Close -->
+                    <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-dark-950">
+                        <span class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-book-open text-blue-400"></i>
+                            <span>Practice Catalog</span>
+                        </span>
+                        <button onclick="toggleProblemSidebar(false)" class="text-slate-400 hover:text-white p-1">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
                     <!-- Search & Filter Controls -->
                     <div class="p-3 border-b border-slate-800 space-y-2 bg-dark-950/40">
                         <div class="relative">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-                            <input type="text" id="problem-search-input" oninput="filterProblemList()" placeholder="Search 30+ problems..." class="w-full bg-dark-800 text-slate-100 text-xs pl-8 pr-3 py-1.5 rounded-md border border-slate-700 focus:outline-none focus:border-blue-500 transition">
+                            <input type="text" id="problem-search-input" oninput="filterProblemList()" placeholder="Search 30+ questions..." class="w-full bg-dark-800 text-slate-100 text-xs pl-8 pr-3 py-1.5 rounded-md border border-slate-700 focus:outline-none focus:border-blue-500 transition">
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-[11px]">
-                            <select id="filter-difficulty" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1 rounded border border-slate-700 focus:outline-none">
+                            <select id="filter-difficulty" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1.5 rounded border border-slate-700 focus:outline-none">
                                 <option value="all">All Difficulties</option>
                                 <option value="Easy">Easy</option>
                                 <option value="Medium">Medium</option>
                                 <option value="Hard">Hard</option>
                             </select>
-                            <select id="filter-category" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1 rounded border border-slate-700 focus:outline-none">
+                            <select id="filter-category" onchange="filterProblemList()" class="bg-dark-800 text-slate-300 p-1.5 rounded border border-slate-700 focus:outline-none">
                                 <option value="all">All Topics</option>
                                 <option value="Arrays">Arrays</option>
                                 <option value="Strings">Strings</option>
@@ -426,10 +457,10 @@
                     </div>
                 </aside>
 
-                <!-- Left Split: Problem Statement & Details Pane -->
-                <section class="flex-1 min-w-[360px] max-w-xl bg-dark-900/60 border-r border-slate-800 flex flex-col overflow-hidden">
-                    <div class="h-9 bg-dark-900 border-b border-slate-800 px-4 flex items-center space-x-4 text-xs font-medium">
-                        <button class="text-blue-400 border-b-2 border-blue-500 pb-1 font-semibold flex items-center space-x-1">
+                <!-- Left Split: Problem Statement & Details Pane (Starts generous at 42% width) -->
+                <section id="arena-desc-pane" class="w-[42%] min-w-[280px] bg-dark-900/60 flex flex-col overflow-hidden shrink-0">
+                    <div class="h-9 bg-dark-900 border-b border-slate-800 px-4 flex items-center space-x-4 text-xs font-medium shrink-0">
+                        <button class="text-blue-400 border-b-2 border-blue-500 pb-1 font-semibold flex items-center space-x-1.5">
                             <i class="fa-regular fa-file-lines"></i>
                             <span>Description</span>
                         </button>
@@ -440,15 +471,21 @@
                     </div>
                 </section>
 
-                <!-- Right Split: Monaco Code Editor & Bottom Judge Drawer -->
-                <section class="flex-1 flex flex-col overflow-hidden bg-dark-950">
-                    <!-- Monaco Container -->
-                    <div id="arena-monaco-container" class="flex-1 min-h-[300px]"></div>
+                <!-- Vertical Resizer Handle between Description & Editor -->
+                <div id="resizer-arena-h" class="resizer-v" title="Drag to resize problem description & editor"></div>
 
-                    <!-- Bottom Judge Drawer (Expandable) -->
-                    <div id="arena-judge-drawer" class="h-64 border-t border-slate-800 bg-dark-900 flex flex-col shrink-0">
+                <!-- Right Split: Monaco Code Editor & Bottom Test Results Drawer -->
+                <section id="arena-editor-pane" class="flex-1 flex flex-col overflow-hidden bg-dark-950 min-w-[360px]">
+                    <!-- Monaco Container -->
+                    <div id="arena-monaco-container" class="flex-1 min-h-[160px] overflow-hidden"></div>
+
+                    <!-- Horizontal Resizer Handle between Code Editor & Judge Drawer -->
+                    <div id="resizer-arena-v" class="resizer-h" title="Drag to resize editor & test results drawer"></div>
+
+                    <!-- Bottom Judge Drawer (Expandable / Resizable) -->
+                    <div id="arena-judge-drawer" class="h-60 bg-dark-900 flex flex-col shrink-0 overflow-hidden">
                         <!-- Drawer Header Tabs -->
-                        <div class="h-9 bg-dark-950/80 px-4 border-b border-slate-800 flex items-center justify-between text-xs">
+                        <div class="h-9 bg-dark-950/80 px-4 border-b border-slate-800 flex items-center justify-between text-xs shrink-0">
                             <div class="flex items-center space-x-3">
                                 <span class="font-bold text-slate-300 flex items-center space-x-1.5">
                                     <i class="fa-solid fa-vial"></i>
@@ -485,28 +522,32 @@
         </div>
 
         <!-- ==================================================================== -->
-        <!-- VIEW 3: VS CODE STUDIO (PLAYGROUND)                                  -->
+        <!-- VIEW 3: PERSONAL CODING PLATFORM (RESIZABLE SPLIT PANE)              -->
         <!-- ==================================================================== -->
         <div id="view-playground" class="h-full hidden flex flex-col overflow-hidden">
             <!-- Studio Toolbar -->
             <div class="h-11 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 text-xs">
                 <div class="flex items-center space-x-3">
                     <span class="font-bold text-slate-200 flex items-center space-x-1.5">
-                        <i class="fa-brands fa-microsoft text-blue-400"></i>
-                        <span>VS Code Playground</span>
+                        <i class="fa-solid fa-terminal text-blue-400"></i>
+                        <span>Personal Coding Platform</span>
                     </span>
                     <span class="text-slate-600">|</span>
-                    <!-- Mock Tabs -->
+                    <!-- File Tabs (C, C++, Python, Java) -->
                     <div class="flex items-center space-x-1">
-                        <button id="tab-play-cpp" onclick="switchPlaygroundFile('cpp')" class="px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5">
-                            <i class="fa-solid fa-code text-blue-400"></i>
+                        <button id="tab-play-c" onclick="switchPlaygroundFile('c')" class="px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5 transition">
+                            <i class="fa-solid fa-c text-blue-400"></i>
+                            <span>main.c</span>
+                        </button>
+                        <button id="tab-play-cpp" onclick="switchPlaygroundFile('cpp')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5 transition">
+                            <i class="fa-solid fa-code text-indigo-400"></i>
                             <span>main.cpp</span>
                         </button>
-                        <button id="tab-play-python" onclick="switchPlaygroundFile('python')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5">
+                        <button id="tab-play-python" onclick="switchPlaygroundFile('python')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5 transition">
                             <i class="fa-brands fa-python text-amber-400"></i>
                             <span>solution.py</span>
                         </button>
-                        <button id="tab-play-java" onclick="switchPlaygroundFile('java')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5">
+                        <button id="tab-play-java" onclick="switchPlaygroundFile('java')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5 transition">
                             <i class="fa-brands fa-java text-rose-400"></i>
                             <span>Main.java</span>
                         </button>
@@ -514,56 +555,93 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <button id="btn-run-playground" onclick="runPlaygroundCode()" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center space-x-2 shadow-sm shadow-blue-600/30">
+                    <button id="btn-run-playground" onclick="runPlaygroundCode()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center space-x-2 shadow-sm shadow-blue-600/30">
                         <i class="fa-solid fa-play text-[11px]"></i>
                         <span>Run Code (Ctrl + Enter)</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Playground Body: Monaco + Split Bottom Terminal -->
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <!-- Monaco Instance -->
-                <div id="playground-monaco-container" class="flex-1 min-h-[300px]"></div>
+            <!-- Playground Body with Draggable Sidebar Resizer -->
+            <div id="play-workspace-container" class="flex-1 flex overflow-hidden relative">
 
-                <!-- Bottom Split Terminal: Stdin (Input) + Console Output (Stdout/Stderr) -->
-                <div class="h-64 border-t border-slate-800 bg-dark-950 flex flex-col shrink-0">
-                    <div class="h-8 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs">
-                        <div class="flex items-center space-x-3">
-                            <span class="font-bold text-slate-300 flex items-center space-x-1.5">
-                                <i class="fa-solid fa-terminal text-slate-400"></i>
-                                <span>Terminal Console</span>
-                            </span>
-                            <span id="playground-status-pill" class="hidden text-[10px] px-2 py-0.5 rounded font-bold font-mono"></span>
-                            <span id="playground-runtime-pill" class="hidden text-[11px] text-slate-400 font-mono"></span>
-                        </div>
-                        <button onclick="clearPlaygroundConsole()" class="text-slate-400 hover:text-slate-200 text-xs">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Clear
-                        </button>
+                <!-- Explorer Sidebar (Left Pane) -->
+                <aside id="play-explorer-pane" class="w-56 min-w-[160px] max-w-sm bg-dark-900 border-r border-slate-800 flex flex-col shrink-0">
+                    <div class="p-3 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-folder-tree text-blue-400"></i>
+                        <span>Project Files</span>
                     </div>
+                    <div class="p-2 space-y-1 text-xs font-mono">
+                        <div onclick="switchPlaygroundFile('c')" class="p-2 rounded hover:bg-dark-800 cursor-pointer flex items-center space-x-2 text-slate-300">
+                            <i class="fa-solid fa-file-code text-blue-400"></i>
+                            <span>main.c</span>
+                        </div>
+                        <div onclick="switchPlaygroundFile('cpp')" class="p-2 rounded hover:bg-dark-800 cursor-pointer flex items-center space-x-2 text-slate-300">
+                            <i class="fa-solid fa-file-code text-indigo-400"></i>
+                            <span>main.cpp</span>
+                        </div>
+                        <div onclick="switchPlaygroundFile('python')" class="p-2 rounded hover:bg-dark-800 cursor-pointer flex items-center space-x-2 text-slate-300">
+                            <i class="fa-brands fa-python text-amber-400"></i>
+                            <span>solution.py</span>
+                        </div>
+                        <div onclick="switchPlaygroundFile('java')" class="p-2 rounded hover:bg-dark-800 cursor-pointer flex items-center space-x-2 text-slate-300">
+                            <i class="fa-brands fa-java text-rose-400"></i>
+                            <span>Main.java</span>
+                        </div>
+                    </div>
+                </aside>
 
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden text-xs font-mono">
-                        <!-- Stdin Input Drawer -->
-                        <div class="flex flex-col p-3 overflow-hidden">
-                            <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
-                                <span>Standard Input (stdin)</span>
-                                <span class="text-[10px] text-slate-500 lowercase">passed to cin/sys.stdin/Scanner</span>
+                <!-- Vertical Resizer Handle between Explorer & Playground Editor -->
+                <div id="resizer-play-h" class="resizer-v" title="Drag to resize explorer & editor"></div>
+
+                <!-- Right Area: Editor + Resizable Terminal Drawer -->
+                <div id="play-editor-terminal-pane" class="flex-1 flex flex-col overflow-hidden min-w-[360px]">
+                    <!-- Monaco Instance -->
+                    <div id="playground-monaco-container" class="flex-1 min-h-[160px] overflow-hidden"></div>
+
+                    <!-- Horizontal Resizer Handle between Editor & Terminal Drawer -->
+                    <div id="resizer-play-v" class="resizer-h" title="Drag to resize editor & terminal console"></div>
+
+                    <!-- Bottom Split Terminal: Stdin (Input) + Console Output (Stdout/Stderr) -->
+                    <div id="playground-terminal-drawer" class="h-60 bg-dark-950 flex flex-col shrink-0 overflow-hidden">
+                        <div class="h-8 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs shrink-0">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-bold text-slate-300 flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-terminal text-slate-400"></i>
+                                    <span>Terminal Console</span>
+                                </span>
+                                <span id="playground-status-pill" class="hidden text-[10px] px-2 py-0.5 rounded font-bold font-mono"></span>
+                                <span id="playground-runtime-pill" class="hidden text-[11px] text-slate-400 font-mono"></span>
                             </div>
-                            <textarea id="playground-stdin-input" placeholder="Type custom input here..." class="flex-1 w-full bg-dark-900 border border-slate-800 rounded p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-none"></textarea>
+                            <button onclick="clearPlaygroundConsole()" class="text-slate-400 hover:text-slate-200 text-xs">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Clear
+                            </button>
                         </div>
 
-                        <!-- Output Console (stdout / stderr) -->
-                        <div class="flex flex-col p-3 overflow-hidden bg-dark-950">
-                            <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
-                                <span>Execution Output (stdout / stderr)</span>
+                        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden text-xs font-mono">
+                            <!-- Stdin Input Drawer -->
+                            <div class="flex flex-col p-3 overflow-hidden">
+                                <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                                    <span>Standard Input (stdin)</span>
+                                    <span class="text-[10px] text-slate-500 lowercase">passed to scanf/cin/sys.stdin</span>
+                                </div>
+                                <textarea id="playground-stdin-input" placeholder="Type custom input here..." class="flex-1 w-full bg-dark-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-none"></textarea>
                             </div>
-                            <pre id="playground-stdout" class="flex-1 overflow-y-auto bg-dark-900/70 border border-slate-800 rounded p-2.5 text-slate-300 whitespace-pre-wrap select-text"></pre>
+
+                            <!-- Output Console (stdout / stderr) -->
+                            <div class="flex flex-col p-3 overflow-hidden bg-dark-950">
+                                <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                                    <span>Execution Output (stdout / stderr)</span>
+                                </div>
+                                <pre id="playground-stdout" class="flex-1 overflow-y-auto bg-dark-900/70 border border-slate-800 rounded-lg p-2.5 text-slate-300 whitespace-pre-wrap select-text"></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
 
-            <!-- VS Code Status Bar with Live Engine Telemetry -->
+            <!-- Status Bar with Live Engine Telemetry -->
             <footer class="h-6 bg-blue-700 text-white px-3 flex items-center justify-between shrink-0 text-[11px] font-mono select-none">
                 <div class="flex items-center space-x-3">
                     <span class="flex items-center space-x-1">
@@ -578,7 +656,7 @@
                     <span>3 FCFS Threads</span>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span id="sb-lang-label">C++17</span>
+                    <span id="sb-lang-label">C (GCC)</span>
                     <span>UTF-8</span>
                     <span class="flex items-center space-x-1">
                         <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
@@ -591,59 +669,43 @@
     </main>
 
     <!-- ==================================================================== -->
-    <!-- AUTH MODAL (LOGIN / SIGN UP)                                         -->
+    <!-- MANDATORY AUTHENTICATION GATE (FULL-SCREEN & NON-DISMISSIBLE)        -->
     <!-- ==================================================================== -->
-    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass-card rounded-2xl w-full max-w-md p-6 border border-slate-700 bg-dark-900 relative shadow-2xl">
-            <button onclick="closeAuthModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-200 text-sm">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-dark-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl w-full max-w-md p-6 border border-slate-700/80 bg-dark-900/90 relative shadow-2xl">
             <!-- Modal Header -->
             <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl mx-auto mb-2 shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-user-lock"></i>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl mx-auto mb-3 shadow-lg shadow-blue-500/25">
+                    <i class="fa-solid fa-lock"></i>
                 </div>
-                <h3 class="text-lg font-bold text-white" id="auth-modal-title">Sign in to CodeBox</h3>
-                <p class="text-xs text-slate-400 mt-1">Access 30+ DSA problems, track submissions & compete on leaderboard.</p>
-            </div>
-
-            <!-- 1-Click Demo Login Banner -->
-            <button onclick="demoLogin()" class="w-full py-2.5 px-4 mb-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-600/20 transition flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-bolt text-amber-300"></i>
-                <span>Instant 1-Click Demo Login (demo_coder)</span>
-            </button>
-
-            <div class="flex items-center my-3">
-                <div class="flex-1 border-t border-slate-800"></div>
-                <span class="px-3 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Or with credentials</span>
-                <div class="flex-1 border-t border-slate-800"></div>
+                <h3 class="text-xl font-bold text-white" id="auth-modal-title">Sign In to CodeBox</h3>
+                <p class="text-xs text-slate-400 mt-1">Please sign in or create an account to access the platform.</p>
             </div>
 
             <!-- Tabs: Login vs Register -->
-            <div class="flex rounded-lg bg-dark-950 p-1 mb-4 text-xs font-semibold">
-                <button id="modal-tab-login" onclick="setAuthMode('login')" class="flex-1 py-1.5 rounded-md bg-dark-800 text-white">Login</button>
-                <button id="modal-tab-signup" onclick="setAuthMode('signup')" class="flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200">Create Account</button>
+            <div class="flex rounded-xl bg-dark-950 p-1 mb-5 text-xs font-semibold">
+                <button id="modal-tab-login" onclick="setAuthMode('login')" class="flex-1 py-2 rounded-lg bg-dark-800 text-white transition">Sign In</button>
+                <button id="modal-tab-signup" onclick="setAuthMode('signup')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">Create Account</button>
             </div>
 
             <!-- Form -->
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
-                <div id="auth-field-email" class="hidden space-y-1">
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs">
+                <div id="auth-field-email" class="hidden space-y-1.5">
                     <label class="text-slate-300 font-medium">Email Address</label>
-                    <input type="email" id="auth-input-email" placeholder="coder@example.com" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                    <input type="email" id="auth-input-email" placeholder="coder@example.com" class="w-full bg-dark-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 transition">
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                     <label id="auth-label-user" class="text-slate-300 font-medium">Username or Email</label>
-                    <input type="text" id="auth-input-identifier" required placeholder="demo_coder" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                    <input type="text" id="auth-input-identifier" required placeholder="Enter username or email" class="w-full bg-dark-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 transition">
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                     <label class="text-slate-300 font-medium">Password</label>
-                    <input type="password" id="auth-input-password" required placeholder="••••••••" class="w-full bg-dark-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                    <input type="password" id="auth-input-password" required placeholder="••••••••" class="w-full bg-dark-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 transition">
                 </div>
 
-                <div id="auth-error-msg" class="hidden text-rose-400 text-xs py-1"></div>
+                <div id="auth-error-msg" class="hidden text-rose-400 text-xs py-1 font-medium bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20"></div>
 
-                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-xl bg-dark-700 hover:bg-dark-600 text-white font-semibold transition mt-2">
+                <button type="submit" id="auth-submit-btn" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg shadow-blue-600/30 mt-2">
                     Sign In
                 </button>
             </form>
@@ -663,14 +725,15 @@
             currentUser: null,
             problems: [],
             selectedProblem: null,
-            arenaLanguage: 'cpp',
+            arenaLanguage: 'c',
             arenaEditor: null,
             playgroundEditor: null,
-            playgroundFile: 'cpp',
+            playgroundFile: 'c',
             playgroundCodeMap: {
-                cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    cout << "CodeBox v3.0 C++17 Playground" << endl;\n    string input;\n    while (getline(cin, input)) {\n        cout << "Echo: " << input << endl;\n    }\n    return 0;\n}`,
-                python: `# CodeBox v3.0 Python 3 Playground\nimport sys\n\nprint("CodeBox v3.0 Python 3 Engine Online")\nfor line in sys.stdin:\n    print(f"Echo: {line.strip()}")`,
-                java: `// CodeBox v3.0 Java 17 Playground\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("CodeBox v3.0 Java 17 Engine Online");\n        Scanner scanner = new Scanner(System.in);\n        while (scanner.hasNextLine()) {\n            System.out.println("Echo: " + scanner.nextLine());\n        }\n    }\n}`
+                c: `#include <stdio.h>\n\nint main() {\n    printf("CodeBox C (GCC) Engine Online\\n");\n    char buffer[1024];\n    while (fgets(buffer, sizeof(buffer), stdin)) {\n        printf("Echo: %s", buffer);\n    }\n    return 0;\n}`,
+                cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    cout << "CodeBox C++17 Engine Online" << endl;\n    string input;\n    while (getline(cin, input)) {\n        cout << "Echo: " << input << endl;\n    }\n    return 0;\n}`,
+                python: `# CodeBox Python 3 Engine Online\nimport sys\n\nprint("CodeBox Python 3 Engine Online")\nfor line in sys.stdin:\n    print(f"Echo: {line.strip()}")`,
+                java: `// CodeBox Java 17 Engine Online\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("CodeBox Java 17 Engine Online");\n        Scanner scanner = new Scanner(System.in);\n        while (scanner.hasNextLine()) {\n            System.out.println("Echo: " + scanner.nextLine());\n        }\n    }\n}`
             },
             authMode: 'login'
         };
@@ -681,10 +744,11 @@
         window.addEventListener('DOMContentLoaded', () => {
             initAuthSession();
             initMonacoEditors();
+            initSplitPaneResizers();
             loadProblemsCatalog();
             loadLeaderboard();
 
-            // Keyboard shortcut for playground
+            // Keyboard shortcut for playground / arena
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     if (AppState.activeView === 'playground') {
@@ -705,7 +769,7 @@
                 const arenaContainer = document.getElementById('arena-monaco-container');
                 AppState.arenaEditor = monaco.editor.create(arenaContainer, {
                     value: '// Select a problem to begin coding...',
-                    language: 'cpp',
+                    language: 'c',
                     theme: 'vs-dark',
                     fontSize: 13,
                     fontFamily: 'JetBrains Mono, monospace',
@@ -719,8 +783,8 @@
                 // Playground Editor
                 const playgroundContainer = document.getElementById('playground-monaco-container');
                 AppState.playgroundEditor = monaco.editor.create(playgroundContainer, {
-                    value: AppState.playgroundCodeMap['cpp'],
-                    language: 'cpp',
+                    value: AppState.playgroundCodeMap['c'],
+                    language: 'c',
                     theme: 'vs-dark',
                     fontSize: 13,
                     fontFamily: 'JetBrains Mono, monospace',
@@ -730,6 +794,145 @@
                     tabSize: 4,
                     padding: { top: 12, bottom: 12 }
                 });
+            });
+        }
+
+        // ====================================================================
+        // SPLIT-PANE DRAGGABLE RESIZERS (SMOOTH & NO POINTER CAPTURE GLITCH)
+        // ====================================================================
+        function initSplitPaneResizers() {
+            const overlay = document.getElementById('drag-overlay');
+
+            // 1. Practice Questions - Vertical Resizer (Description vs Editor)
+            const resizerArenaH = document.getElementById('resizer-arena-h');
+            const descPane = document.getElementById('arena-desc-pane');
+            const arenaContainer = document.getElementById('arena-workspace-container');
+
+            resizerArenaH.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                resizerArenaH.classList.add('active');
+                overlay.style.cursor = 'col-resize';
+                overlay.classList.remove('hidden');
+
+                const startX = e.clientX;
+                const startWidth = descPane.getBoundingClientRect().width;
+                const containerWidth = arenaContainer.getBoundingClientRect().width;
+
+                function onMouseMove(ev) {
+                    const dx = ev.clientX - startX;
+                    const newWidth = Math.max(280, Math.min(containerWidth - 360, startWidth + dx));
+                    descPane.style.width = newWidth + 'px';
+                    if (AppState.arenaEditor) AppState.arenaEditor.layout();
+                }
+
+                function onMouseUp() {
+                    resizerArenaH.classList.remove('active');
+                    overlay.classList.add('hidden');
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    if (AppState.arenaEditor) AppState.arenaEditor.layout();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+
+            // 2. Practice Questions - Horizontal Resizer (Editor vs Judge Drawer)
+            const resizerArenaV = document.getElementById('resizer-arena-v');
+            const judgeDrawer = document.getElementById('arena-judge-drawer');
+
+            resizerArenaV.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                resizerArenaV.classList.add('active');
+                overlay.style.cursor = 'row-resize';
+                overlay.classList.remove('hidden');
+
+                const startY = e.clientY;
+                const startHeight = judgeDrawer.getBoundingClientRect().height;
+
+                function onMouseMove(ev) {
+                    const dy = ev.clientY - startY;
+                    const newHeight = Math.max(120, Math.min(520, startHeight - dy));
+                    judgeDrawer.style.height = newHeight + 'px';
+                    if (AppState.arenaEditor) AppState.arenaEditor.layout();
+                }
+
+                function onMouseUp() {
+                    resizerArenaV.classList.remove('active');
+                    overlay.classList.add('hidden');
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    if (AppState.arenaEditor) AppState.arenaEditor.layout();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+
+            // 3. Personal Coding Platform - Vertical Resizer (Explorer vs Editor)
+            const resizerPlayH = document.getElementById('resizer-play-h');
+            const explorerPane = document.getElementById('play-explorer-pane');
+            const playContainer = document.getElementById('play-workspace-container');
+
+            resizerPlayH.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                resizerPlayH.classList.add('active');
+                overlay.style.cursor = 'col-resize';
+                overlay.classList.remove('hidden');
+
+                const startX = e.clientX;
+                const startWidth = explorerPane.getBoundingClientRect().width;
+                const containerWidth = playContainer.getBoundingClientRect().width;
+
+                function onMouseMove(ev) {
+                    const dx = ev.clientX - startX;
+                    const newWidth = Math.max(160, Math.min(containerWidth - 360, startWidth + dx));
+                    explorerPane.style.width = newWidth + 'px';
+                    if (AppState.playgroundEditor) AppState.playgroundEditor.layout();
+                }
+
+                function onMouseUp() {
+                    resizerPlayH.classList.remove('active');
+                    overlay.classList.add('hidden');
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    if (AppState.playgroundEditor) AppState.playgroundEditor.layout();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+
+            // 4. Personal Coding Platform - Horizontal Resizer (Editor vs Terminal)
+            const resizerPlayV = document.getElementById('resizer-play-v');
+            const terminalDrawer = document.getElementById('playground-terminal-drawer');
+
+            resizerPlayV.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                resizerPlayV.classList.add('active');
+                overlay.style.cursor = 'row-resize';
+                overlay.classList.remove('hidden');
+
+                const startY = e.clientY;
+                const startHeight = terminalDrawer.getBoundingClientRect().height;
+
+                function onMouseMove(ev) {
+                    const dy = ev.clientY - startY;
+                    const newHeight = Math.max(120, Math.min(520, startHeight - dy));
+                    terminalDrawer.style.height = newHeight + 'px';
+                    if (AppState.playgroundEditor) AppState.playgroundEditor.layout();
+                }
+
+                function onMouseUp() {
+                    resizerPlayV.classList.remove('active');
+                    overlay.classList.add('hidden');
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    if (AppState.playgroundEditor) AppState.playgroundEditor.layout();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
             });
         }
 
@@ -765,7 +968,7 @@
         }
 
         // ====================================================================
-        // AUTHENTICATION & SESSION MANAGEMENT
+        // AUTHENTICATION & MANDATORY LOGIN GATE
         // ====================================================================
         function initAuthSession() {
             const saved = localStorage.getItem('codebox_user');
@@ -775,41 +978,31 @@
                     updateUserUI();
                     loadUserStats(AppState.currentUser.user_id);
                     loadUserSubmissions(AppState.currentUser.user_id);
+                    document.getElementById('auth-modal').classList.add('hidden');
                 } catch (e) {
                     localStorage.removeItem('codebox_user');
+                    showAuthModal();
                 }
             } else {
-                updateUserUI();
+                showAuthModal();
             }
         }
 
-        function updateUserUI() {
-            const loggedInEl = document.getElementById('auth-logged-in');
-            const loggedOutEl = document.getElementById('auth-logged-out');
-            const dashUser = document.getElementById('dash-username');
+        function showAuthModal() {
+            AppState.currentUser = null;
+            document.getElementById('auth-modal').classList.remove('hidden');
+            setAuthMode('login');
+        }
 
+        function updateUserUI() {
+            const dashUser = document.getElementById('dash-username');
             if (AppState.currentUser) {
-                loggedInEl.classList.remove('hidden');
-                loggedOutEl.classList.add('hidden');
                 document.getElementById('header-username').textContent = AppState.currentUser.username;
                 document.getElementById('user-avatar-initial').textContent = AppState.currentUser.username.charAt(0).toUpperCase();
                 dashUser.textContent = AppState.currentUser.username;
             } else {
-                loggedInEl.classList.add('hidden');
-                loggedOutEl.classList.remove('hidden');
-                dashUser.textContent = 'Guest';
+                dashUser.textContent = 'User';
             }
-        }
-
-        function openAuthModal(mode = 'login') {
-            AppState.authMode = mode;
-            setAuthMode(mode);
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('auth-error-msg').classList.add('hidden');
         }
 
         function setAuthMode(mode) {
@@ -820,19 +1013,20 @@
             const submitBtn = document.getElementById('auth-submit-btn');
             const modalTitle = document.getElementById('auth-modal-title');
             const userLabel = document.getElementById('auth-label-user');
+            document.getElementById('auth-error-msg').classList.add('hidden');
 
             if (mode === 'login') {
-                tabLogin.className = "flex-1 py-1.5 rounded-md bg-dark-800 text-white font-semibold";
-                tabSignup.className = "flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200";
+                tabLogin.className = "flex-1 py-2 rounded-lg bg-dark-800 text-white font-semibold transition";
+                tabSignup.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
                 emailField.classList.add('hidden');
                 submitBtn.textContent = 'Sign In';
-                modalTitle.textContent = 'Sign in to CodeBox';
+                modalTitle.textContent = 'Sign In to CodeBox';
                 userLabel.textContent = 'Username or Email';
             } else {
-                tabSignup.className = "flex-1 py-1.5 rounded-md bg-dark-800 text-white font-semibold";
-                tabLogin.className = "flex-1 py-1.5 rounded-md text-slate-400 hover:text-slate-200";
+                tabSignup.className = "flex-1 py-2 rounded-lg bg-dark-800 text-white font-semibold transition";
+                tabLogin.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
                 emailField.classList.remove('hidden');
-                submitBtn.textContent = 'Create Free Account';
+                submitBtn.textContent = 'Create Account';
                 modalTitle.textContent = 'Create your CodeBox Account';
                 userLabel.textContent = 'Username';
             }
@@ -871,34 +1065,16 @@
                     onAuthSuccess(data.user);
                     showToast('Account created successfully!', 'success');
                 }
-                closeAuthModal();
             } catch (err) {
                 errorEl.textContent = err.message;
                 errorEl.classList.remove('hidden');
             }
         }
 
-        async function demoLogin() {
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ identifier: 'demo_coder', password: 'demo123' })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Demo login failed');
-
-                onAuthSuccess(data.user, data.stats);
-                closeAuthModal();
-                showToast('Logged in as demo_coder!', 'success');
-            } catch (err) {
-                showToast('Demo login error: ' + err.message, 'error');
-            }
-        }
-
         function onAuthSuccess(user, stats = null) {
             AppState.currentUser = user;
             localStorage.setItem('codebox_user', JSON.stringify(user));
+            document.getElementById('auth-modal').classList.add('hidden');
             updateUserUI();
             if (stats) updateStatsUI(stats);
             else loadUserStats(user.user_id);
@@ -916,13 +1092,13 @@
             document.getElementById('user-submissions-list').innerHTML = `
                 <div class="py-8 text-center text-slate-500 text-xs">Sign in to view your submissions history.</div>
             `;
+            showAuthModal();
             showToast('You have been logged out.', 'info');
         }
 
         async function loadUserStats(userId) {
             try {
                 const res = await fetch(`/api/problems?userId=${userId}`);
-                // Refresh problems to update checkmarks
                 loadProblemsCatalog();
             } catch (e) {}
         }
@@ -942,7 +1118,7 @@
         }
 
         // ====================================================================
-        // PROBLEM CATALOG & LEETCODE ARENA
+        // PRACTICE QUESTIONS CATALOG & CODE LOADER
         // ====================================================================
         async function loadProblemsCatalog() {
             try {
@@ -951,9 +1127,8 @@
                 AppState.problems = await res.json();
                 renderProblemList(AppState.problems);
 
-                // Auto-select problem #1 on first load if none selected
                 if (!AppState.selectedProblem && AppState.problems.length > 0) {
-                    selectProblem(AppState.problems[0].problem_id);
+                    selectProblem(AppState.problems[0].problem_id, false);
                 }
             } catch (e) {
                 console.error("Failed to load problems catalog", e);
@@ -969,7 +1144,7 @@
                 if (p.is_solved) solvedCount++;
                 const item = document.createElement('div');
                 item.className = `p-3 hover:bg-dark-800/80 cursor-pointer transition flex items-center justify-between ${AppState.selectedProblem && AppState.selectedProblem.problem_id === p.problem_id ? 'bg-dark-800 border-l-2 border-blue-500' : ''}`;
-                item.onclick = () => selectProblem(p.problem_id);
+                item.onclick = () => selectProblem(p.problem_id, true);
 
                 const diffColor = p.difficulty === 'Easy' ? 'text-emerald-400 bg-emerald-500/10' :
                                   p.difficulty === 'Medium' ? 'text-amber-400 bg-amber-500/10' : 'text-rose-400 bg-rose-500/10';
@@ -1007,7 +1182,7 @@
             renderProblemList(filtered);
         }
 
-        async function selectProblem(problemId) {
+        async function selectProblem(problemId, autoCloseDrawer = true) {
             try {
                 const res = await fetch(`/api/problems/${problemId}`);
                 const detail = await res.json();
@@ -1030,11 +1205,12 @@
                 // Update Description Content
                 const contentEl = document.getElementById('arena-problem-content');
                 let sampleHtml = '';
-                if (detail.sample_test_cases && detail.sample_test_cases.length > 0) {
+                const sampleCases = detail.sample_test_cases || detail.sample_testcases || [];
+                if (sampleCases.length > 0) {
                     sampleHtml = `
                         <div class="space-y-3 mt-4">
                             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sample Test Case</h4>
-                            ${detail.sample_test_cases.map((stc, idx) => `
+                            ${sampleCases.map((stc, idx) => `
                                 <div class="bg-dark-950 border border-slate-800 rounded-lg p-3 text-xs font-mono space-y-2">
                                     <div>
                                         <div class="text-[10px] text-slate-500 uppercase font-bold">Input (stdin):</div>
@@ -1052,7 +1228,7 @@
 
                 contentEl.innerHTML = `
                     <div class="space-y-4">
-                        <div class="prose prose-invert max-w-none text-slate-300 text-sm">
+                        <div class="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed">
                             ${detail.description}
                         </div>
                         ${detail.constraints ? `
@@ -1073,6 +1249,11 @@
 
                 // Re-render catalog to update active highlight
                 renderProblemList(AppState.problems);
+
+                // Auto close the sidebar drawer to give generous width to editor
+                if (autoCloseDrawer) {
+                    toggleProblemSidebar(false);
+                }
             } catch (e) {
                 console.error("Failed to load problem details", e);
             }
@@ -1087,16 +1268,19 @@
             if (!AppState.selectedProblem || !AppState.arenaEditor) return;
 
             let code = '';
-            let monacoLang = 'cpp';
+            let monacoLang = 'c';
 
-            if (AppState.arenaLanguage === 'cpp') {
-                code = AppState.selectedProblem.starter_cpp || '// C++ starter code';
+            if (AppState.arenaLanguage === 'c') {
+                code = AppState.selectedProblem.starter_c || '// C starter template\n#include <stdio.h>\n\nint main() {\n    return 0;\n}';
+                monacoLang = 'c';
+            } else if (AppState.arenaLanguage === 'cpp') {
+                code = AppState.selectedProblem.starter_cpp || '// C++ starter template';
                 monacoLang = 'cpp';
             } else if (AppState.arenaLanguage === 'python') {
-                code = AppState.selectedProblem.starter_python || '# Python starter code';
+                code = AppState.selectedProblem.starter_python || '# Python starter template';
                 monacoLang = 'python';
             } else if (AppState.arenaLanguage === 'java') {
-                code = AppState.selectedProblem.starter_java || '// Java starter code';
+                code = AppState.selectedProblem.starter_java || '// Java starter template';
                 monacoLang = 'java';
             }
 
@@ -1110,9 +1294,14 @@
             }
         }
 
-        function toggleProblemSidebar() {
+        function toggleProblemSidebar(forceState) {
             const sidebar = document.getElementById('problem-catalog-sidebar');
-            sidebar.classList.toggle('hidden');
+            if (forceState !== undefined) {
+                if (forceState) sidebar.classList.remove('hidden');
+                else sidebar.classList.add('hidden');
+            } else {
+                sidebar.classList.toggle('hidden');
+            }
             setTimeout(() => { if (AppState.arenaEditor) AppState.arenaEditor.layout(); }, 50);
         }
 
@@ -1122,14 +1311,19 @@
         async function runArenaCode(sampleOnly = false) {
             if (!AppState.selectedProblem) return;
 
+            if (!AppState.currentUser) {
+                showAuthModal();
+                showToast("Please sign in to run code.", "error");
+                return;
+            }
+
             const btn = sampleOnly ? document.getElementById('btn-run-sample') : document.getElementById('btn-submit-solution');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Judging in Docker...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Evaluating...</span>`;
             btn.disabled = true;
 
-            const userId = AppState.currentUser ? AppState.currentUser.user_id : 1;
             const payload = {
-                userId: userId,
+                userId: AppState.currentUser.user_id,
                 problemId: AppState.selectedProblem.problem_id,
                 language: AppState.arenaLanguage,
                 code: AppState.arenaEditor.getValue(),
@@ -1153,7 +1347,6 @@
                     } else {
                         showToast(`${result.verdict} (${result.passed_cases}/${result.total_cases} passed)`, 'error');
                     }
-                    // Refresh stats & submissions
                     if (AppState.currentUser) {
                         loadUserStats(AppState.currentUser.user_id);
                         loadUserSubmissions(AppState.currentUser.user_id);
@@ -1207,9 +1400,7 @@
                     tabsContainer.appendChild(pill);
                 });
 
-                // Display first testcase by default
-                const firstPill = tabsContainer.querySelectorAll('button')[0];
-                selectTestCaseDetail(result.test_cases[0], firstPill, tabsContainer);
+                selectTestCaseDetail(result.test_cases[0], tabsContainer.querySelectorAll('button')[0], tabsContainer);
             }
         }
 
@@ -1260,7 +1451,7 @@
         }
 
         // ====================================================================
-        // VS CODE STUDIO (PLAYGROUND) EXECUTION
+        // PERSONAL CODING PLATFORM EXECUTION
         // ====================================================================
         function switchPlaygroundFile(lang) {
             if (AppState.playgroundEditor) {
@@ -1268,26 +1459,30 @@
             }
             AppState.playgroundFile = lang;
 
-            const langs = ['cpp', 'python', 'java'];
+            const langs = ['c', 'cpp', 'python', 'java'];
             langs.forEach(l => {
                 const tab = document.getElementById(`tab-play-${l}`);
-                if (l === lang) {
-                    tab.className = "px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5";
-                } else {
-                    tab.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5";
+                if (tab) {
+                    if (l === lang) {
+                        tab.className = "px-3 py-1 rounded bg-dark-800 text-white font-mono text-[11px] border-t-2 border-blue-500 flex items-center space-x-1.5 transition";
+                    } else {
+                        tab.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 font-mono text-[11px] flex items-center space-x-1.5 transition";
+                    }
                 }
             });
 
-            const monacoLang = lang === 'cpp' ? 'cpp' : (lang === 'python' ? 'python' : 'java');
+            const monacoLang = lang === 'c' ? 'c' : (lang === 'cpp' ? 'cpp' : (lang === 'python' ? 'python' : 'java'));
             monaco.editor.setModelLanguage(AppState.playgroundEditor.getModel(), monacoLang);
             AppState.playgroundEditor.setValue(AppState.playgroundCodeMap[lang]);
-            document.getElementById('sb-lang-label').textContent = lang === 'cpp' ? 'C++17' : (lang === 'python' ? 'Python 3' : 'Java 17');
+            
+            const labelMap = { c: 'C (GCC)', cpp: 'C++17', python: 'Python 3', java: 'Java 17' };
+            document.getElementById('sb-lang-label').textContent = labelMap[lang] || 'C++17';
         }
 
         async function runPlaygroundCode() {
             const btn = document.getElementById('btn-run-playground');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Executing...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Executing in Docker...</span>`;
             btn.disabled = true;
 
             const code = AppState.playgroundEditor.getValue();
@@ -1357,7 +1552,7 @@
                 tbody.innerHTML = '';
 
                 if (users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No users ranked yet.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No registered users ranked yet.</td></tr>';
                     return;
                 }
 
@@ -1399,7 +1594,7 @@
                 list.innerHTML = '';
 
                 if (subs.length === 0) {
-                    list.innerHTML = '<div class="py-8 text-center text-slate-500 text-xs">No submissions yet. Solve a problem in LeetCode Arena!</div>';
+                    list.innerHTML = '<div class="py-8 text-center text-slate-500 text-xs">No submissions yet. Solve a problem in Practice Questions!</div>';
                     return;
                 }
 

@@ -266,15 +266,21 @@ void ApiHandler::handlePlaygroundRun(const string& body, httplib::Response& res)
 void ApiHandler::handleLeetCodeSubmit(const string& body, httplib::Response& res) {
     int userId = extractJsonInt(body, "userId");
     if (userId <= 0) {
-        userId = extractJsonInt(body, "user_id", 1); // default to demo user if not logged in
+        userId = extractJsonInt(body, "user_id", 0);
     }
+    bool sampleOnly = extractJsonBool(body, "sampleOnly", false);
+
+    if (!sampleOnly && userId <= 0) {
+        sendJsonResponse(res, 401, "{\"error\":\"Authentication required. Please sign in to submit solutions.\"}");
+        return;
+    }
+
     int problemId = extractJsonInt(body, "problemId");
     if (problemId <= 0) {
         problemId = extractJsonInt(body, "problem_id");
     }
     string language = extractJsonString(body, "language");
     string code = extractJsonString(body, "code");
-    bool sampleOnly = extractJsonBool(body, "sampleOnly", false);
 
     if (problemId <= 0 || language.empty() || code.empty()) {
         sendJsonResponse(res, 400, "{\"error\":\"Missing required fields: problemId, language, code\"}");

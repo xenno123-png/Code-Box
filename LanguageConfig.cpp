@@ -46,7 +46,7 @@ string LanguageConfig::getRunCommand(const string& language, const string& sourc
         innerCommand = "timeout 2s python3 " + fileName + inputRedirection;
     } else if (lang == "c") {
         image = "gcc:latest";
-        innerCommand = "gcc " + fileName + " -o " + stem + " && timeout 2s ./" + stem + inputRedirection;
+        innerCommand = "gcc -O2 " + fileName + " -o " + stem + " && timeout 2s ./" + stem + inputRedirection;
     } else if (lang == "java") {
         image = "openjdk:17";
         innerCommand = "javac " + fileName + " && timeout 2s java " + stem + inputRedirection;

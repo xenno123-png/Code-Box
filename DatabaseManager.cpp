@@ -84,6 +84,9 @@ bool DatabaseManager::autoInitialize(const string& schemaPath, const string& see
         cout << "DatabaseManager: 3NF database schema & 30 DSA problems seeded successfully!" << endl;
     } else {
         cout << "DatabaseManager: 3NF database schema and problems already exist." << endl;
+        lock_guard<mutex> lock(dbMtx);
+        sqlite3_exec(db, "ALTER TABLE problems ADD COLUMN starter_c TEXT NOT NULL DEFAULT '';", nullptr, nullptr, nullptr);
+        sqlite3_exec(db, "INSERT OR IGNORE INTO languages (language_id, name, display_name, docker_image) VALUES (4, 'c', 'C (GCC)', 'gcc:latest');", nullptr, nullptr, nullptr);
     }
 
     return true;
@@ -318,7 +321,7 @@ string DatabaseManager::getProblemDetailJson(int problemId) {
         "SELECT "
         "  p.problem_id, p.title, p.slug, p.description, p.constraints, "
         "  d.label, d.points, c.name, "
-        "  p.starter_cpp, p.starter_python, p.starter_java "
+        "  p.starter_cpp, p.starter_python, p.starter_java, p.starter_c "
         "FROM problems p "
         "JOIN difficulties d ON p.difficulty_id = d.difficulty_id "
         "JOIN categories c ON p.category_id = c.category_id "
@@ -348,6 +351,7 @@ string DatabaseManager::getProblemDetailJson(int problemId) {
     string starterCpp = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
     string starterPy = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9));
     string starterJava = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
+    string starterC = sqlite3_column_text(stmt, 11) ? reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11)) : "";
     sqlite3_finalize(stmt);
 
     // Fetch sample test cases
@@ -387,6 +391,8 @@ string DatabaseManager::getProblemDetailJson(int problemId) {
        << "\"starter_cpp\":\"" << escapeJson(starterCpp) << "\","
        << "\"starter_python\":\"" << escapeJson(starterPy) << "\","
        << "\"starter_java\":\"" << escapeJson(starterJava) << "\","
+       << "\"starter_c\":\"" << escapeJson(starterC) << "\","
+       << "\"sample_test_cases\":" << sampleTcJson.str() << ","
        << "\"sample_testcases\":" << sampleTcJson.str()
        << "}";
 

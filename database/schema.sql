@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS categories (
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS languages (
     language_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,        -- 'cpp', 'python', 'java'
-    display_name TEXT NOT NULL,       -- 'C++17', 'Python 3', 'Java 17'
+    name TEXT UNIQUE NOT NULL,        -- 'c', 'cpp', 'python', 'java'
+    display_name TEXT NOT NULL,       -- 'C (GCC)', 'C++17', 'Python 3', 'Java 17'
     docker_image TEXT NOT NULL        -- 'gcc:latest', 'python:3', 'openjdk:17'
 );
 
@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS problems (
     starter_cpp TEXT NOT NULL,
     starter_python TEXT NOT NULL,
     starter_java TEXT NOT NULL,
+    starter_c TEXT NOT NULL DEFAULT '',
     FOREIGN KEY (difficulty_id) REFERENCES difficulties(difficulty_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
