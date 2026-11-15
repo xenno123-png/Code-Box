@@ -62,10 +62,8 @@ Code_Box/
 │   ├── front_end.html             # Monaco Editor SPA & Dark Theme UI
 │   └── README.md                  # Frontend architecture guide
 │
-├── DETAILS/                       # Project Documentation & Viva Defense Manuals
-│   ├── CodeBox_Phase3_Code_Explanation.pdf  # 13-page line-by-line code explanation manual
-│   ├── CodeBox_Phase3.pdf         # Comprehensive Phase 3 systems manual
-│   └── CodeBox_Phase2.pdf         # Phase 2 execution engine documentation
+├── DETAILS/                       # Project Documentation & Systems Blueprint
+│   └── CodeBox.pdf                # Master Technical & Defense Guide (Overview, OS, DBMS)
 │
 ├── Makefile                       # Master build orchestration
 ├── .gitignore                     # Git ignore rules (binaries, .db, obj/)
