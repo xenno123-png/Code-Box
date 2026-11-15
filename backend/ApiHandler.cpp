@@ -97,8 +97,15 @@ void ApiHandler::handle(const httplib::Request& req, httplib::Response& res) {
 }
 
 void ApiHandler::handleServeFrontend(httplib::Response& res) {
-    // Look for demo.html in current working directory
-    const vector<string> searchPaths = {"demo.html", "./demo.html", "../demo.html"};
+    // Look for demo.html in frontend directory or current working directory
+    const vector<string> searchPaths = {
+        "frontend/demo.html",
+        "./frontend/demo.html",
+        "../frontend/demo.html",
+        "demo.html",
+        "./demo.html",
+        "../demo.html"
+    };
     string htmlContent;
     bool found = false;
 

@@ -1,5 +1,5 @@
 # ==============================================================================
-# CodeBox: Containerized Code Execution Engine
+# CodeBox: Containerized Code Execution Engine & Judge Platform (Phase 3)
 # Production-Grade Makefile for Systems & Backend C++ Service
 # ==============================================================================
 
@@ -11,20 +11,21 @@ CXXFLAGS ?= -std=c++17 -pthread
 TARGET   := codebox_server
 
 # Build directories
-BUILD_DIR := obj
-BIN_DIR   := .
+BACKEND_DIR := backend
+BUILD_DIR   := obj
+BIN_DIR     := .
 
 # Source and Object files
-SRCS     := main.cpp \
-            ApiHandler.cpp \
-            QueueScheduler.cpp \
-            DockerSandbox.cpp \
-            FileManager.cpp \
-            LanguageConfig.cpp \
-            ResultEvaluator.cpp \
-            DatabaseManager.cpp
+SRCS     := $(BACKEND_DIR)/main.cpp \
+            $(BACKEND_DIR)/ApiHandler.cpp \
+            $(BACKEND_DIR)/QueueScheduler.cpp \
+            $(BACKEND_DIR)/DockerSandbox.cpp \
+            $(BACKEND_DIR)/FileManager.cpp \
+            $(BACKEND_DIR)/LanguageConfig.cpp \
+            $(BACKEND_DIR)/ResultEvaluator.cpp \
+            $(BACKEND_DIR)/DatabaseManager.cpp
 
-OBJS     := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+OBJS     := $(patsubst $(BACKEND_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 DEPS     := $(OBJS:.o=.d)
 
 # Base Warning & Diagnostic Flags
@@ -32,10 +33,6 @@ WARN_FLAGS := -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor \
               -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual
 
 # Build Configuration: Release (default) vs Debug
-# Usage:
-#   make            -> Optimized Release build (-O2)
-#   make DEBUG=1    -> Debug build (-O0 -g3)
-#   make ASAN=1     -> Address & Undefined Behavior Sanitizer enabled
 ifeq ($(DEBUG), 1)
     OPT_FLAGS   := -O0 -g3 -DDEBUG
 else
@@ -50,8 +47,8 @@ endif
 # Dependency generation flags (-MMD -MP)
 DEP_FLAGS := -MMD -MP
 
-# Final compiler flags
-CXXFLAGS += $(OPT_FLAGS) $(WARN_FLAGS) $(DEP_FLAGS)
+# Final compiler flags (including -Ibackend)
+CXXFLAGS += $(OPT_FLAGS) $(WARN_FLAGS) $(DEP_FLAGS) -I$(BACKEND_DIR)
 LDFLAGS  += -pthread -lsqlite3
 
 # Cross-platform command helpers
@@ -88,7 +85,7 @@ $(TARGET_BIN): $(OBJS) | $(BIN_DIR)
 	@echo "==> Build successful: $@"
 
 # Compiling source files into object files (with automatic dependency tracking)
-$(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(BACKEND_DIR)/%.cpp | $(BUILD_DIR)
 	@echo "==> Compiling: $<"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -118,7 +115,8 @@ help:
 	@echo "CodeBox Build System"
 	@echo "--------------------"
 	@echo "Available targets:"
-	@echo "  make              : Compile release build (optimized -O2)"
+	@echo "  make              : Compile release build (optimized -O2) and run"
+	@echo "  make release      : Compile optimized release binary"
 	@echo "  make debug        : Compile debug build (-g3 -O0)"
 	@echo "  make ASAN=1       : Compile with AddressSanitizer and UndefinedBehaviorSanitizer"
 	@echo "  make run          : Compile and run the code execution engine"

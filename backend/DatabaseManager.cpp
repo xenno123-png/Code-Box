@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-DatabaseManager::DatabaseManager() : db(nullptr), dbFilePath("codebox.db") {}
+DatabaseManager::DatabaseManager() : db(nullptr), dbFilePath("database/codebox.db") {}
 
 DatabaseManager::~DatabaseManager() {
     close();
@@ -19,24 +19,48 @@ bool DatabaseManager::init(const string& dbPath) {
         return true;
     }
 
-    dbFilePath = dbPath;
-    int rc = sqlite3_open(dbPath.c_str(), &db);
-    if (rc != SQLITE_OK) {
-        cerr << "DatabaseManager: failed to open SQLite database " << dbPath 
-             << " (" << sqlite3_errmsg(db) << ")" << endl;
-        if (db) {
-            sqlite3_close(db);
-            db = nullptr;
+    // Try candidate paths to be resilient whether run from project root, backend/, or database/
+    vector<string> candidates;
+    candidates.push_back(dbPath);
+    if (dbPath.rfind("database/", 0) == 0) {
+        candidates.push_back("../" + dbPath);
+        candidates.push_back(dbPath.substr(9)); // strip "database/" -> "codebox.db"
+    } else {
+        candidates.push_back("database/" + dbPath);
+        candidates.push_back("../database/" + dbPath);
+    }
+
+    string actualPath = dbPath;
+    sqlite3* tempDb = nullptr;
+    int rc = SQLITE_ERROR;
+
+    for (const auto& candidate : candidates) {
+        rc = sqlite3_open(candidate.c_str(), &tempDb);
+        if (rc == SQLITE_OK && tempDb != nullptr) {
+            actualPath = candidate;
+            db = tempDb;
+            break;
+        } else {
+            if (tempDb) {
+                sqlite3_close(tempDb);
+                tempDb = nullptr;
+            }
         }
+    }
+
+    if (!db) {
+        cerr << "DatabaseManager: failed to open SQLite database at any candidate path for: " << dbPath << endl;
         return false;
     }
+
+    dbFilePath = actualPath;
 
     // Set pragmas for performance, foreign keys, and concurrency timeout
     sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
     sqlite3_exec(db, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
     sqlite3_exec(db, "PRAGMA busy_timeout = 5000;", nullptr, nullptr, nullptr);
 
-    cout << "DatabaseManager: SQLite database initialized at " << dbPath << endl;
+    cout << "DatabaseManager: SQLite database initialized at " << dbFilePath << endl;
     return true;
 }
 
@@ -93,7 +117,23 @@ bool DatabaseManager::autoInitialize(const string& schemaPath, const string& see
 }
 
 bool DatabaseManager::executeScript(const string& scriptPath) {
-    ifstream file(scriptPath);
+    vector<string> candidates = {
+        scriptPath,
+        "../" + scriptPath,
+        (scriptPath.rfind("database/", 0) == 0 ? scriptPath.substr(9) : "database/" + scriptPath)
+    };
+
+    ifstream file;
+    string resolvedPath = scriptPath;
+    for (const auto& c : candidates) {
+        file.open(c);
+        if (file.is_open()) {
+            resolvedPath = c;
+            break;
+        }
+        file.clear();
+    }
+
     if (!file.is_open()) {
         cerr << "DatabaseManager: could not open script file " << scriptPath << endl;
         return false;
@@ -110,7 +150,7 @@ bool DatabaseManager::executeScript(const string& scriptPath) {
     char* errMsg = nullptr;
     int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg);
     if (rc != SQLITE_OK) {
-        cerr << "DatabaseManager: SQL script execution error in " << scriptPath << ": " 
+        cerr << "DatabaseManager: SQL script execution error in " << resolvedPath << ": " 
              << (errMsg ? errMsg : "unknown") << endl;
         sqlite3_free(errMsg);
         return false;
