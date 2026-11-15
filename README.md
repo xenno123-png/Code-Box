@@ -62,8 +62,10 @@ Code_Box/
 │   ├── front_end.html             # Monaco Editor SPA & Dark Theme UI
 │   └── README.md                  # Frontend architecture guide
 │
-├── DETAILS/                       # Project Documentation & Systems Blueprint
-│   └── CodeBox.pdf                # Master Technical & Defense Guide (Overview, OS, DBMS)
+├── DETAILS/                       # Project Documentation & University Progress Reports
+│   ├── CodeBox.pdf                # Master Technical & Defense Guide (Overview, OS, DBMS)
+│   ├── phase 3 template.docx      # GEHU Phase 3 Project Progress Report (Editable DOCX)
+│   └── phase 3 template.pdf       # GEHU Phase 3 Project Progress Report (Submission-ready PDF)
 │
 ├── Makefile                       # Master build orchestration
 ├── .gitignore                     # Git ignore rules (binaries, .db, obj/)
