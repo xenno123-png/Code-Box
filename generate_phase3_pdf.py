@@ -316,7 +316,7 @@ def build_phase3_pdf(output_path):
         [Paragraph("<b>Directory</b>", table_header_style), Paragraph("<b>Key Files Contained</b>", table_header_style), Paragraph("<b>Exact Architectural Role</b>", table_header_style)],
         [
             Paragraph("<b><code>frontend/</code></b>", table_cell_bold),
-            Paragraph("<code>demo.html</code><br/><code>README.md</code>", table_cell_style),
+            Paragraph("<code>front_end.html</code><br/><code>README.md</code>", table_cell_style),
             Paragraph("Single Page Application (SPA). Monaco Code Editor integrate karta hai, mandatory login gate manage karta hai, tabs switch karta hai, aur mouse drag resizers handle karta hai.", table_cell_style)
         ],
         [
@@ -724,7 +724,7 @@ def build_phase3_pdf(output_path):
     # PAGE 7: FULL-STACK FRONTEND SPA & DRAGGABLE RESIZERS
     # ==================================================================
     story.append(PageBreak())
-    story.append(Paragraph("6. Full-Stack Single Page Application (`frontend/demo.html`)", h1_style))
+    story.append(Paragraph("6. Full-Stack Single Page Application (`frontend/front_end.html`)", h1_style))
     story.append(Paragraph(
         "CodeBox ka frontend ek modern Single Page Application (SPA) hai jise bina kisi bloated heavy framework (React/Angular) ke "
         "pure high-performance <b>Vanilla ES6+ JavaScript</b>, <b>Tailwind CSS CDN</b>, aur <b>Microsoft Monaco Editor CDN</b> se banaya gaya hai. "
@@ -798,9 +798,9 @@ def build_phase3_pdf(output_path):
     api_table_data = [
         [Paragraph("<b>Method &amp; Path</b>", table_header_style), Paragraph("<b>Request Body</b>", table_header_style), Paragraph("<b>Response Payload</b>", table_header_style), Paragraph("<b>Functionality</b>", table_header_style)],
         [
-            Paragraph("<b><code>GET /</code></b><br/><b><code>GET /demo.html</code></b>", table_cell_bold),
+            Paragraph("<b><code>GET /</code></b><br/><b><code>GET /front_end.html</code></b>", table_cell_bold),
             Paragraph("<i>None</i>", table_cell_style),
-            Paragraph("HTML File (<code>frontend/demo.html</code>)", table_cell_style),
+            Paragraph("HTML File (<code>frontend/front_end.html</code>)", table_cell_style),
             Paragraph("Serves the single-page frontend application from <code>frontend/</code> directory with fallback search.", table_cell_style)
         ],
         [
@@ -972,7 +972,7 @@ def build_phase3_pdf(output_path):
 
     story.append(Paragraph("Verifying REST Endpoints via cURL", h2_style))
     curl_sample = (
-        "# 1. Test Web Server (Returns demo.html from frontend/)\n"
+        "# 1. Test Web Server (Returns front_end.html from frontend/)\n"
         "curl -I http://localhost:8080/\n"
         "# Expected: HTTP/1.1 200 OK | Content-Type: text/html\n\n"
         "# 2. Test 3NF Problem Catalog API\n"

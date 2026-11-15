@@ -8,7 +8,7 @@ This directory contains the production-grade C++17 execution engine, REST API se
 
 ```
                    +------------------------+
-                   |     demo.html (SPA)    |
+                   |   front_end.html (SPA) |
                    +-----------+------------+
                                | (HTTP / REST)
                                v

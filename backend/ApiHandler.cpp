@@ -17,7 +17,7 @@ void ApiHandler::handle(const httplib::Request& req, httplib::Response& res) {
     const string& path = req.path;
 
     // Frontend Web Asset
-    if (path == "/" || path == "/index.html" || path == "/demo.html") {
+    if (path == "/" || path == "/index.html" || path == "/front_end.html" || path == "/demo.html") {
         handleServeFrontend(res);
         return;
     }
@@ -97,14 +97,18 @@ void ApiHandler::handle(const httplib::Request& req, httplib::Response& res) {
 }
 
 void ApiHandler::handleServeFrontend(httplib::Response& res) {
-    // Look for demo.html in frontend directory or current working directory
+    // Look for front_end.html (or fallback demo.html) in frontend directory or current working directory
     const vector<string> searchPaths = {
+        "frontend/front_end.html",
+        "./frontend/front_end.html",
+        "../frontend/front_end.html",
+        "front_end.html",
+        "./front_end.html",
+        "../front_end.html",
         "frontend/demo.html",
         "./frontend/demo.html",
         "../frontend/demo.html",
-        "demo.html",
-        "./demo.html",
-        "../demo.html"
+        "demo.html"
     };
     string htmlContent;
     bool found = false;
@@ -122,7 +126,7 @@ void ApiHandler::handleServeFrontend(httplib::Response& res) {
 
     if (!found) {
         res.status = 404;
-        res.set_content("<h1>404 Not Found</h1><p>demo.html was not found in the server directory.</p>", "text/html; charset=utf-8");
+        res.set_content("<h1>404 Not Found</h1><p>front_end.html was not found in the frontend directory.</p>", "text/html; charset=utf-8");
         return;
     }
 

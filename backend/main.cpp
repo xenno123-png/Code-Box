@@ -38,6 +38,7 @@ int main() {
     // Frontend Web Asset Routes
     server.Get("/", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
     server.Get("/index.html", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
+    server.Get("/front_end.html", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
     server.Get("/demo.html", [&](const httplib::Request& req, httplib::Response& res) { handler.handle(req, res); });
 
     // Health Check
