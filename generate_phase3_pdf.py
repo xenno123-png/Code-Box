@@ -831,7 +831,7 @@ def build_phase3_pdf(output_path):
             Paragraph("<b><code>POST /api/playground/run</code></b>", table_cell_bold),
             Paragraph("<code>{ language, code, stdin }</code>", table_cell_style),
             Paragraph("<code>{ status: 'success', stdout, stderr, execution_time_ms }</code>", table_cell_style),
-            Paragraph("Ad-hoc code execution in Personal Coding Platform inside Docker with 256MB RAM and 2.0s timeout.", table_cell_style)
+            Paragraph("Ad-hoc code execution in Coding Platform inside Docker with 256MB RAM and 2.0s timeout.", table_cell_style)
         ],
         [
             Paragraph("<b><code>POST /api/leetcode/submit</code></b>", table_cell_bold),

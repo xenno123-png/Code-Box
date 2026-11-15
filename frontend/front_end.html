@@ -145,7 +145,7 @@
             </button>
             <button id="nav-btn-playground" onclick="switchView('playground')" class="px-4 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-2 transition-all duration-200 text-slate-400 hover:text-slate-200">
                 <i class="fa-solid fa-terminal"></i>
-                <span>Personal Coding Platform</span>
+                <span>Coding Platform</span>
             </button>
         </nav>
 
@@ -196,7 +196,7 @@
                             </button>
                             <button onclick="switchView('playground')" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center space-x-2">
                                 <i class="fa-solid fa-code"></i>
-                                <span>Personal Coding Platform</span>
+                                <span>Coding Platform</span>
                             </button>
                         </div>
                     </div>
@@ -530,7 +530,7 @@
                 <div class="flex items-center space-x-3">
                     <span class="font-bold text-slate-200 flex items-center space-x-1.5">
                         <i class="fa-solid fa-terminal text-blue-400"></i>
-                        <span>Personal Coding Platform</span>
+                        <span>Coding Platform</span>
                     </span>
                     <span class="text-slate-600">|</span>
                     <!-- File Tabs (C, C++, Python, Java) -->
@@ -602,38 +602,38 @@
                     <!-- Horizontal Resizer Handle between Editor & Terminal Drawer -->
                     <div id="resizer-play-v" class="resizer-h" title="Drag to resize editor & terminal console"></div>
 
-                    <!-- Bottom Split Terminal: Stdin (Input) + Console Output (Stdout/Stderr) -->
-                    <div id="playground-terminal-drawer" class="h-60 bg-dark-950 flex flex-col shrink-0 overflow-hidden">
-                        <div class="h-8 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs shrink-0">
-                            <div class="flex items-center space-x-3">
-                                <span class="font-bold text-slate-300 flex items-center space-x-1.5">
-                                    <i class="fa-solid fa-terminal text-slate-400"></i>
-                                    <span>Terminal Console</span>
-                                </span>
+                    <!-- Bottom Unified Terminal / Output Drawer (VS Code Style) -->
+                    <div id="playground-terminal-drawer" class="h-60 bg-dark-950 flex flex-col shrink-0 overflow-hidden border-t border-slate-800">
+                        <!-- VS Code Terminal Header with Tab -->
+                        <div class="h-8 bg-dark-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs shrink-0 select-none">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-1.5 border-b-2 border-blue-500 pb-1.5 pt-1">
+                                    <i class="fa-solid fa-terminal text-blue-400 text-[11px]"></i>
+                                    <span class="font-bold text-white text-[11px] tracking-wider uppercase">Terminal / Output</span>
+                                </div>
                                 <span id="playground-status-pill" class="hidden text-[10px] px-2 py-0.5 rounded font-bold font-mono"></span>
                                 <span id="playground-runtime-pill" class="hidden text-[11px] text-slate-400 font-mono"></span>
                             </div>
-                            <button onclick="clearPlaygroundConsole()" class="text-slate-400 hover:text-slate-200 text-xs">
-                                <i class="fa-solid fa-trash-can mr-1"></i> Clear
-                            </button>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="clearPlaygroundConsole()" class="text-slate-400 hover:text-slate-200 text-xs flex items-center space-x-1 transition" title="Clear console">
+                                    <i class="fa-solid fa-trash-can mr-1"></i>
+                                    <span>Clear</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden text-xs font-mono">
-                            <!-- Stdin Input Drawer -->
-                            <div class="flex flex-col p-3 overflow-hidden">
-                                <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
-                                    <span>Standard Input (stdin)</span>
-                                    <span class="text-[10px] text-slate-500 lowercase">passed to scanf/cin/sys.stdin</span>
-                                </div>
-                                <textarea id="playground-stdin-input" placeholder="Type custom input here..." class="flex-1 w-full bg-dark-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-none"></textarea>
-                            </div>
+                        <!-- Unified Terminal Body: Screen + Terminal Input Prompt Bar -->
+                        <div class="flex-1 flex flex-col overflow-hidden bg-dark-950 font-mono text-xs">
+                            <!-- Scrollable Output Screen -->
+                            <pre id="playground-stdout" class="flex-1 overflow-y-auto p-3 text-slate-300 whitespace-pre-wrap select-text leading-relaxed font-mono">codebox@sandbox:~/workspace$ Ready. Press 'Run Code (Ctrl + Enter)' to execute.</pre>
 
-                            <!-- Output Console (stdout / stderr) -->
-                            <div class="flex flex-col p-3 overflow-hidden bg-dark-950">
-                                <div class="flex items-center justify-between mb-1.5 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
-                                    <span>Execution Output (stdout / stderr)</span>
-                                </div>
-                                <pre id="playground-stdout" class="flex-1 overflow-y-auto bg-dark-900/70 border border-slate-800 rounded-lg p-2.5 text-slate-300 whitespace-pre-wrap select-text"></pre>
+                            <!-- Integrated Terminal Input Prompt (stdin) -->
+                            <div class="h-9 bg-dark-900/90 border-t border-slate-800 px-3 flex items-center space-x-2 shrink-0">
+                                <span class="text-emerald-400 font-bold flex items-center space-x-1 select-none text-[11px]">
+                                    <i class="fa-solid fa-chevron-right text-[10px] text-blue-400"></i>
+                                    <span>stdin:</span>
+                                </span>
+                                <input type="text" id="playground-stdin-input" placeholder="Type standard input passed to program (or leave empty)..." class="flex-1 bg-transparent text-slate-200 placeholder-slate-600 focus:outline-none text-xs font-mono">
                             </div>
                         </div>
                     </div>
@@ -869,7 +869,7 @@
                 window.addEventListener('mouseup', onMouseUp);
             });
 
-            // 3. Personal Coding Platform - Vertical Resizer (Explorer vs Editor)
+            // 3. Coding Platform - Vertical Resizer (Explorer vs Editor)
             const resizerPlayH = document.getElementById('resizer-play-h');
             const explorerPane = document.getElementById('play-explorer-pane');
             const playContainer = document.getElementById('play-workspace-container');
@@ -903,7 +903,7 @@
                 window.addEventListener('mouseup', onMouseUp);
             });
 
-            // 4. Personal Coding Platform - Horizontal Resizer (Editor vs Terminal)
+            // 4. Coding Platform - Horizontal Resizer (Editor vs Terminal / Output)
             const resizerPlayV = document.getElementById('resizer-play-v');
             const terminalDrawer = document.getElementById('playground-terminal-drawer');
 
@@ -1486,10 +1486,13 @@
             btn.disabled = true;
 
             const code = AppState.playgroundEditor.getValue();
-            const stdin = document.getElementById('playground-stdin-input').value;
+            const stdin = document.getElementById('playground-stdin-input') ? document.getElementById('playground-stdin-input').value : '';
             const stdoutEl = document.getElementById('playground-stdout');
 
-            stdoutEl.textContent = 'Launching isolated Docker container (256MB RAM limit, 2s SIGKILL watchdog)...';
+            const langCmdMap = { c: './main', cpp: './main', python: 'python3 solution.py', java: 'java Main' };
+            const cmd = langCmdMap[AppState.playgroundFile] || './main';
+
+            stdoutEl.textContent = `codebox@sandbox:~/workspace$ ${cmd}\n[Compiling & Executing in Docker (256MB RAM limit, 2.0s SIGKILL watchdog)...]\n`;
 
             try {
                 const res = await fetch('/api/playground/run', {
@@ -1519,15 +1522,19 @@
                     statusPill.className = 'text-[10px] px-2 py-0.5 rounded font-bold font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30';
                 }
 
-                let outputText = '';
+                let outputText = `codebox@sandbox:~/workspace$ ${cmd}\n`;
+                if (stdin && stdin.trim()) {
+                    outputText += `[stdin]: ${stdin}\n`;
+                }
                 if (data.stdout) outputText += data.stdout;
-                if (data.stderr) outputText += (outputText ? '\n--- STDERR ---\n' : '') + data.stderr;
-                if (!outputText) outputText = '(Execution finished cleanly with no output)';
+                if (data.stderr) outputText += (data.stdout ? '\n' : '') + data.stderr;
+                if (!data.stdout && !data.stderr) outputText += '(Execution completed with exit code 0 and no output)';
+                outputText += `\n\n[Process completed in ${data.executionTimeMs}ms with verdict: ${data.status}]`;
 
                 stdoutEl.textContent = outputText;
                 showToast(`Run finished: ${data.status} (${data.executionTimeMs}ms)`, data.status === 'Accepted' ? 'success' : 'error');
             } catch (err) {
-                stdoutEl.textContent = 'Execution Error: ' + err.message;
+                stdoutEl.textContent = `codebox@sandbox:~/workspace$ ${cmd}\nExecution Error: ` + err.message;
                 showToast(err.message, 'error');
             } finally {
                 btn.innerHTML = originalText;
@@ -1536,7 +1543,9 @@
         }
 
         function clearPlaygroundConsole() {
-            document.getElementById('playground-stdout').textContent = '';
+            document.getElementById('playground-stdout').textContent = 'codebox@sandbox:~/workspace$ ';
+            const stdin = document.getElementById('playground-stdin-input');
+            if (stdin) stdin.value = '';
             document.getElementById('playground-status-pill').classList.add('hidden');
             document.getElementById('playground-runtime-pill').classList.add('hidden');
         }

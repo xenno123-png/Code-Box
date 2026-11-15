@@ -18,10 +18,10 @@ This directory contains the user interface for CodeBox — a modern, responsive 
 - **Integrated Test Runner**: Run sample test cases or submit code to execute against all hidden test cases in real-time with detailed verdicts (Accepted, Wrong Answer, TLE, Compilation Error, Runtime Error).
 - **Draggable Bottom Console**: Smooth vertical resize handle (`row-resize`) to expand/collapse test case inputs, compiler diagnostics, and execution statistics.
 
-### 3. Personal Coding Platform (VS Code-Style Studio)
+### 3. Coding Platform (VS Code-Style Studio)
 - **File Explorer Sidebar**: Switch between `main.c`, `main.cpp`, `main.py`, and `Solution.java`.
 - **Full Monaco Editor**: Microsoft Monaco Editor instance with auto-completion, line numbers, bracket matching, and theme customization (`vs-dark`).
-- **Interactive Terminal**: Custom `stdin` input box and real-time execution `stdout`/`stderr` console.
+- **Unified Terminal / Output**: Single full-width VS Code-style console with integrated prompt, standard input, and stdout/stderr execution stream.
 - **Draggable Resizers**: Full mouse-drag split resizing between the file tree and code editor, as well as between the editor and terminal drawer.
 
 ---
